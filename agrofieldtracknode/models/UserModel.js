@@ -23,14 +23,6 @@ const UsersSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
-    },
-    planos: {
-        _id: { type: mongoose.Schema.Types.ObjectId, ref: "planos", required: true },
-        title: { type: String, require: true },
-        features: { type: [String], required: true },
-        icon: { type: String, required: true },
-        price: { type: String, required: true },
-        color: { type: String, required: true }
     }
 });
 const Users = mongoose.model("users", UsersSchema);

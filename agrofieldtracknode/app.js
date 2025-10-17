@@ -3,15 +3,13 @@ const path = require("path");
 var bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
-var mongodb_url = "mongodb+srv://Andre:<db_password>@cluster0.qgywnv0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+var mongodb_url = "mongodb+srv://Andre:123@cluster0.qgywnv0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 const cors= require("cors")
 const dotenv = require('dotenv');
 dotenv.config();
 
 
-const router = express.Router();
-router.use(express.json());
-
+const app = express();
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -25,7 +23,6 @@ app.use(
       "http://localhost:8100",  // Ionic
       "http://127.0.0.1:8100", // Ionic (alternativo)
       "https://ionicseawatch.onrender.com" ,
-       mongodb_url,
       "https://feppv-marineer-bucket.s3.eu-central-1.amazonaws.com",
       "https://ionicseawatch.onrender.com"
     ],

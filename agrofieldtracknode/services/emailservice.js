@@ -1,4 +1,4 @@
-const Users = require("../models/UsersModel"); // <--- importa teu modelo User
+const Users = require("../models/UserModel"); // <--- importa teu modelo User
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const jwtkey = 'jkdoamnwpa';

@@ -1,4 +1,4 @@
-const Users = require("../models/UsersModel");
+const Users = require("../models/UserModel");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const jwtkey = 'jkdoamnwpa';
@@ -65,11 +65,6 @@ const AuthController = {
                 return res.status(400).json({ message: "Já existe um usuário com esse username." });
             }
 
-            const plano = await Planos.findOne({ title: "Free" });
-            if (!plano) {
-                return res.status(400).json({ message: "Não há plano que exista" });
-            }
-
             const encrypted_pass = await bcrypt.hash(password, 10);
             const newUser = await Users.create({
                 username,
@@ -79,17 +74,6 @@ const AuthController = {
                 pontos: 0,
                 ativo: 0,
                 subtype: "Normal",
-                planos: plano,
-                Lv: 0,
-                Xp: {
-                    falta: 100,
-                    tenho: 0,
-                },
-                pontuaçao: {
-                    quiz: 0,
-                    memoria: 0
-                },
-                title: "Explorador Novato",
                 profilePic: "https://feppv-marineer-bucket.s3.eu-central-1.amazonaws.com/aws-1746803776536-68379383.png",
             });
 
