@@ -18,10 +18,11 @@ const getPublications = async (req, res) => {
 
 const createPublication = async (req, res) => {
     try {
-        let { title, message, publication_type, tags, participantes, pontos } = req.body;
+        let { title, message, publication_type, tags, participantes, preco } = req.body;
         const imagens = req.file ? req.file.location : null;
 
-        const ponto = parseInt(pontos);
+        const precos = parseFloat(preco) || 0;
+
 
         let user = req.body.user;
         if (typeof user === 'string') {
@@ -46,7 +47,7 @@ const createPublication = async (req, res) => {
         // Criar e salvar a nova publicação
         const newPublication = new Market({
             title,
-            pontos: ponto,
+            preco: precos,
             message,
             author,
             publication_type,
@@ -118,9 +119,9 @@ const deletePublication = async (req, res) => {
 
 // Função para editar uma publicação
 const updatePublication = async (req, res) => {
-    let { title, message, publication_type, participanteId, pontos } = req.body;
+    let { title, message, publication_type, participanteId, preco } = req.body;
     const publicationId = req.params.id;
-    pontos = parseInt(pontos, 10) || 0;
+    preco = parseInt(preco, 10) || 0;
 
     if (!mongoose.Types.ObjectId.isValid(publicationId)) {
         return res.status(400).json({ success: false, message: 'ID inválido' });
@@ -140,7 +141,7 @@ const updatePublication = async (req, res) => {
 
         // Atualizar os campos de texto
         publication.title = title || publication.title;
-        publication.pontos = pontos || publication.pontos;
+        publication.preco = preco || publication.preco;
         publication.message = message || publication.message;
         publication.publication_type = publication_type || publication.publication_type;
 

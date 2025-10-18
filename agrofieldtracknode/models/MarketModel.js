@@ -22,13 +22,14 @@ const MarketSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    pontos:{
+    preco:{
         type: Number,
         required: false
     },
     publication_type: {
         type: String,
-        required: true
+        required: true,
+        default: "publi"
     },
     comentarios: [{
         type: mongoose.Schema.Types.ObjectId,
