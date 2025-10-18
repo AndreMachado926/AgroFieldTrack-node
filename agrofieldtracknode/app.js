@@ -23,7 +23,6 @@ app.use(
       "http://localhost:8100",  // Ionic
       "http://127.0.0.1:8100", // Ionic (alternativo)
       "https://ionicseawatch.onrender.com" ,
-      "https://feppv-marineer-bucket.s3.eu-central-1.amazonaws.com",
       "https://ionicseawatch.onrender.com"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Métodos permitidos
@@ -33,7 +32,14 @@ app.use(
 );
 
 const AuthRoute = require("./routes/AuthRoute");
+<<<<<<< Updated upstream
 const VerificationRoutes= require('./routes/VerificationRoute')
+=======
+const listasRouter = require('./routes/ListaRoute');
+const plantacoesRouter = require('./routes/platacoesRoute');
+app.use('/', plantacoesRouter);
+app.use('/', listasRouter);
+>>>>>>> Stashed changes
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -51,13 +57,21 @@ app.use(cookieParser());
 app.use(AuthRoute);
 app.use(VerificationRoutes);
 
+// rota de diagnóstico rápida
+app.get('/ping', (req, res) => res.status(200).send('pong'));
+
+const PORT = process.env.PORT || 8000;
+
+// start server immediately so /ping e rotas respondem mesmo que o Mongo esteja em falha
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}...`);
+});
+
+// tenta ligar ao Mongo, mas não impede o server de arrancar
 mongoose.connect(mongodb_url)
-    .then(result => {
-        app.listen(8000, () => {
-            console.log("Servidor rodando na porta 8000...");
-        });
-        console.log("Conexão com o MongoDB estabelecida com sucesso!");
-    })
-    .catch(error => {
-        console.log("Erro ao conectar com MongoDB:", error);
-    });
+  .then(() => {
+    console.log("Conexão com o MongoDB estabelecida com sucesso!");
+  })
+  .catch(error => {
+    console.error("Erro ao conectar com MongoDB:", error);
+  });

@@ -1,1 +1,8 @@
 agrofieldtracknode/.gitignore
+node_modules/
+.env
+.DS_Store
+.vscode/
+dist/
+build/
+*.log
