@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 const plantacoesSchema = new Schema({
-    nome: { type: String, required: true, trim: true },
+    nome: { type: String, required: true },
+    planta: { type: String, required: true, trim: true },
     pontosx: { type: [Number], required: true },
     pontosy: { type: [Number], required: true },
     dono_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
