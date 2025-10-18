@@ -2,12 +2,12 @@ const Plantacao = require('../models/PlantacoesModel'); // ajuste se o nome do m
 const jwt = require('jsonwebtoken');
 const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 
-const getAllPlantacoes = async (req, res) => {
+const getPlantacoes = async (req, res) => {
   try {
-    let donoId = req.params?.dono_id || null;
+    // aceita: /plantacoes/:user_id  ou query ?user_id=...  ou token (cookie Authorization)
+    let ownerId = req.params?.user_id || req.params?.dono_id || req.query?.user_id || req.query?.dono_id || null;
 
-    // se não veio param, tenta token no cookie/authorization
-    if (!donoId) {
+    if (!ownerId) {
       const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
       if (!token) {
         return res.status(401).json({ success: false, message: 'Not authenticated' });
@@ -18,11 +18,11 @@ const getAllPlantacoes = async (req, res) => {
       } catch (err) {
         return res.status(401).json({ success: false, message: 'Invalid token' });
       }
-      donoId = decoded.user_id || decoded.id || decoded._id || decoded.sub;
-      if (!donoId) return res.status(401).json({ success: false, message: 'Invalid token payload' });
+      ownerId = decoded.user_id || decoded.id || decoded._id || decoded.sub;
+      if (!ownerId) return res.status(401).json({ success: false, message: 'Invalid token payload' });
     }
 
-    const plantacoes = await Plantacao.find({ dono_id: donoId }).lean();
+    const plantacoes = await Plantacao.find({ dono_id: ownerId }).lean();
     return res.status(200).json({ success: true, count: plantacoes.length, data: plantacoes });
   } catch (err) {
     console.error('Erro ao obter plantações:', err);
@@ -31,4 +31,8 @@ const getAllPlantacoes = async (req, res) => {
 };
 
 
-module.exports = { getAllPlantacoes};
+const createPlantacao = async (req, res) => {
+  // ...existing createPlantacao implementation or placeholder...
+};
+
+module.exports = { getPlantacoes, createPlantacao };
