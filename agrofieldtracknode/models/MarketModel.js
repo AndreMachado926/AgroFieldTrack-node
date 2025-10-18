@@ -4,7 +4,7 @@ const Comentario = require('../models/ComentarioModel');  // Isso já está corr
 const MarketSchema = new mongoose.Schema({
     author: {
         id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        username: { type: String,ref: 'User', required: false }
+        username: { type: String, ref: 'User', required: false }
     },
     title: {
         type: String,
@@ -19,10 +19,10 @@ const MarketSchema = new mongoose.Schema({
         required: false
     },
     imagens: {
-        type: String,
-        required: false
+        data: Buffer,
+        contentType: String
     },
-    preco:{
+    preco: {
         type: Number,
         required: false
     },
@@ -33,7 +33,7 @@ const MarketSchema = new mongoose.Schema({
     },
     comentarios: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'comentarios' 
+        ref: 'comentarios'
     }]
 }, { timestamps: true });
 
