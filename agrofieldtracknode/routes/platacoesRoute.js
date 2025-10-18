@@ -4,7 +4,6 @@ const router = express.Router();
 const { getAllPlantacoes, createPlantacao } = require('../controllers/PlantacoesControler');
 
 router.get('/plantacoes/:dono_id', getAllPlantacoes);
-router.get('/plantacoes', getAllPlantacoes); // fallback para usar token no cookie
-router.post('/plantacoes', createPlantacao);
+router.get('/plantacoes', getAllPlantacoes); 
 
 module.exports = router;
