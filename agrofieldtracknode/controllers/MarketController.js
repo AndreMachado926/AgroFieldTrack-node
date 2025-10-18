@@ -10,7 +10,20 @@ const getPublications = async (req, res) => {
         const publications = await Market.find()
             .populate('author', 'username')
             .sort({ createdAt: 1 });
-        res.json(publications);
+
+        const formattedPublications = publications.map(pub => {
+            let image = null;
+            if (pub.imagens && pub.imagens.data) {
+                const base64 = pub.imagens.data.toString('base64');
+                image = `data:${pub.imagens.contentType};base64,${base64}`;
+            }
+            return {
+                ...pub.toObject(),
+                imagens: image
+            };
+        });
+
+        res.json(formattedPublications);
     } catch (err) {
         res.status(500).json({ success: false, message: 'Erro ao buscar publicações' });
     }
@@ -18,60 +31,51 @@ const getPublications = async (req, res) => {
 
 const createPublication = async (req, res) => {
     try {
-        let { title, message, publication_type, tags, participantes, preco } = req.body;
-        const imagens = req.file ? req.file.location : null;
-
-        const precos = parseFloat(preco) || 0;
-
+        let { title, message, publication_type, tags, preco } = req.body;
 
         let user = req.body.user;
-        if (typeof user === 'string') {
-            user = JSON.parse(user);
-        }
+        if (typeof user === 'string') user = JSON.parse(user);
 
-        // Garantir que tags sejam um array
+        // Transformar tags em array
         if (tags && typeof tags === 'string') {
-            tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+            tags = tags.split(',').map(tag => tag.trim());
         } else if (!Array.isArray(tags)) {
             tags = [];
         }
 
-        // Configuração do autor com ID e nome, mesmo que seja um "desconhecido"
-        let authorId = user._id === 'unknown' ? new mongoose.Types.ObjectId() : new mongoose.Types.ObjectId(user._id);
+        // Se houver imagem, transformar em buffer
+        let imagens = null;
+        if (req.file) {
+            imagens = {
+                data: fs.readFileSync(req.file.path), // Lê o arquivo
+                contentType: req.file.mimetype
+            };
+        }
 
-        const author = {
-            id: authorId,
-            username: user.username
-        };
-
-        // Criar e salvar a nova publicação
         const newPublication = new Market({
             title,
-            preco: precos,
             message,
-            author,
+            preco: parseFloat(preco) || 0,
             publication_type,
             tags,
-            imagens: imagens,
-            participantes,
-            createdAt: new Date(),
+            author: {
+                id: new mongoose.Types.ObjectId(user._id),
+                username: user.username
+            },
+            imagens
         });
 
         await newPublication.save();
 
-        res.json({
-            success: true,
-            publication: newPublication,
-            authorName: author.username
-        });
-
-    } catch (error) {
+        res.json({ success: true, publication: newPublication });
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ success: false, message: 'Erro ao salvar publicação' });
     }
 };
 
 
-// Função para obter detalhes de uma publicação
+
 const getPublicationDetails = async (req, res) => {
     const { id } = req.params;
 
@@ -90,12 +94,25 @@ const getPublicationDetails = async (req, res) => {
             return res.status(404).json({ error: 'Publicação não encontrada' });
         }
 
+        // Formatar a imagem se existir
+        let image = null;
+        if (publication.imagens && publication.imagens.data) {
+            const base64 = publication.imagens.data.toString('base64');
+            image = `data:${publication.imagens.contentType};base64,${base64}`;
+        }
 
-        res.json(publication);
+        const formattedPublication = {
+            ...publication.toObject(),
+            imagens: image
+        };
+
+        res.json(formattedPublication);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Erro no servidor' });
     }
 };
+
 
 // Função para deletar uma publicação
 const deletePublication = async (req, res) => {
