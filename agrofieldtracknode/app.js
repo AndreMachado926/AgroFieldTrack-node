@@ -32,14 +32,13 @@ app.use(
 );
 
 const AuthRoute = require("./routes/AuthRoute");
-<<<<<<< Updated upstream
 const VerificationRoutes= require('./routes/VerificationRoute')
-=======
+const SettingsRoute= require("./routes/SettingsRoute");
+const marketRoute = require("./routes/MarketRoute");
 const listasRouter = require('./routes/ListaRoute');
 const plantacoesRouter = require('./routes/platacoesRoute');
 app.use('/', plantacoesRouter);
 app.use('/', listasRouter);
->>>>>>> Stashed changes
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -55,8 +54,9 @@ app.set('view engine', 'ejs');
 app.use(cookieParser());
 
 app.use(AuthRoute);
+app.use(SettingsRoute);
 app.use(VerificationRoutes);
-
+app.use(marketRoute);
 // rota de diagnóstico rápida
 app.get('/ping', (req, res) => res.status(200).send('pong'));
 

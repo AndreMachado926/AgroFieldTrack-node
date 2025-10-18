@@ -106,7 +106,10 @@ const AuthController = {
             res.status(401).json({ authenticated: false });
         }
     },
-
+    logout: async (req, res) => {
+        res.clearCookie("auth");
+        res.status(200).send({ message: "logout successful" })
+    },
 
     getuser: async (req, res) => {
         const { userId } = req.body;

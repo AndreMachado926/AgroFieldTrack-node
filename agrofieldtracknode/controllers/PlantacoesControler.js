@@ -27,7 +27,7 @@ const createPlantacao = async (req, res) => {
       planta: String(planta).trim(),
       localizacaoX: Number(0),
       localizacaoY: Number(0),
-      dono_id:Number(1)
+      dono_id: Number(1)
     });
 
     await plantacao.save();
@@ -39,4 +39,4 @@ const createPlantacao = async (req, res) => {
   }
 };
 
-module.exports = {getAllplantacoes ,createPlantacao};
+module.exports = { getAllplantacoes, createPlantacao };
