@@ -33,7 +33,7 @@ app.use(
 );
 
 const AuthRoute = require("./routes/AuthRoute");
-
+const VerificationRoutes= require('./routes/VerificationRoute')
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -49,6 +49,7 @@ app.set('view engine', 'ejs');
 app.use(cookieParser());
 
 app.use(AuthRoute);
+app.use(VerificationRoutes);
 
 mongoose.connect(mongodb_url)
     .then(result => {

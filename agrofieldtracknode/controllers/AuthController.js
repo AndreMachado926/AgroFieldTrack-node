@@ -2,7 +2,7 @@ const Users = require("../models/UserModel");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const jwtkey = 'jkdoamnwpa';
-const { sendVerificationEmail } = require("../services/emailService");
+const { sendVerificationEmail } = require("../services/emailservice");
 const AuthController = {
     index: (req, res) => {
         res.render("login/index");
