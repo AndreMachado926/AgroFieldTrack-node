@@ -1,4 +1,5 @@
 const Animal = require('../models/AnimaisModel');
+const User = require('../models/UserModel');
 const jwt = require('jsonwebtoken');
 const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 
@@ -40,8 +41,6 @@ const getAllAnimais = async (req, res) => {
     });
   }
 };
-
-// função para adicionar um animal
 const createAnimal = async (req, res) => {
   try {
     const { nome, raca, idade, localizacaoX, localizacaoY } = req.body;
@@ -84,5 +83,46 @@ const createAnimal = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Erro ao criar animal' });
   }
 };
+const updateAnimalLocation = async (req, res) => {
+  try {
+    const animalId = req.params?.id || req.body?.id;
+    if (!animalId) return res.status(400).json({ success: false, message: 'animal id obrigatório (params.id ou body.id)' });
 
-module.exports = { getAllAnimais, createAnimal };
+    const newX = req.body?.localizacaoX;
+    const newY = req.body?.localizacaoY;
+    if (newX === undefined && newY === undefined) {
+      return res.status(400).json({ success: false, message: 'Pelo menos localizacaoX ou localizacaoY obrigatório' });
+    }
+
+    // buscar documento atual
+    const doc = await Animal.findById(animalId).select('localizacaoX localizacaoY locationHistory');
+    if (!doc) return res.status(404).json({ success: false, message: 'Animal não encontrado' });
+
+    const prevX = doc.localizacaoX;
+    const prevY = doc.localizacaoY;
+    const parsedNewX = newX !== undefined ? Number(newX) : prevX;
+    const parsedNewY = newY !== undefined ? Number(newY) : prevY;
+
+    // se não mudou, devolve sem alterações
+    if (parsedNewX === prevX && parsedNewY === prevY) {
+      return res.status(200).json({ success: true, message: 'Coordenadas inalteradas', data: doc });
+    }
+
+    // atômico: push histórico e set novas coordenadas
+    const updated = await Animal.findByIdAndUpdate(
+      animalId,
+      {
+        $push: { locationHistory: { x: prevX, y: prevY, at: new Date() } },
+        $set: { localizacaoX: parsedNewX, localizacaoY: parsedNewY }
+      },
+      { new: true }
+    ).lean();
+
+    return res.status(200).json({ success: true, data: updated });
+  } catch (err) {
+    console.error('Erro ao actualizar localização:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao actualizar localização' });
+  }
+};
+
+module.exports = { getAllAnimais, createAnimal, updateAnimalLocation, }
