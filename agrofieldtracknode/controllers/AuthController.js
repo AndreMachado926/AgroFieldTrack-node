@@ -1,7 +1,7 @@
 const Users = require("../models/UserModel");
 const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
-const jwtkey = 'jkdoamnwpa';
+const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 const { sendVerificationEmail } = require("../services/emailservice");
 const AuthController = {
     index: (req, res) => {
@@ -34,7 +34,7 @@ const AuthController = {
                         username: user.username
 
                     },
-                    jwtkey,
+                    jwtKey,
                     {
                         expiresIn: "30d"
                     }
@@ -78,7 +78,7 @@ const AuthController = {
             });
 
             // Gerar token de verificação
-            const token = jwt.sign({ user_id: newUser._id }, jwtkey, { expiresIn: "1h" });
+            const token = jwt.sign({ user_id: newUser._id }, jwtKey, { expiresIn: "1h" });
 
             // Enviar email de verificação
             await sendVerificationEmail(newUser, token);
@@ -100,7 +100,7 @@ const AuthController = {
             return res.status(401).json({ authenticated: false });
         }
         try {
-            const decoded = jwt.verify(token, jwtkey);
+            const decoded = jwt.verify(token, jwtKey);
             res.json({ authenticated: true, user: decoded });
         } catch (err) {
             res.status(401).json({ authenticated: false });
@@ -126,6 +126,19 @@ const AuthController = {
             return res.json(userData); // Retornar os dados do usuário
         } catch (err) {
             return res.status(500).json({ authenticated: false, message: "Error fetching user data" });
+        }
+    },
+
+    me: (req, res) => {
+        try {
+            const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+            if (!token) return res.status(401).json({ message: 'Not authenticated' });
+            const decoded = jwt.verify(token, jwtKey);
+            const userId = decoded.user_id || decoded.id || decoded._id || decoded.sub;
+            if (!userId) return res.status(401).json({ message: 'Invalid token payload' });
+            return res.json({ user_id: userId });
+        } catch (err) {
+            return res.status(401).json({ message: 'Invalid token' });
         }
     },
 };
