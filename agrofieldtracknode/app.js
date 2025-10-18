@@ -1,45 +1,30 @@
 const express = require("express");
 const path = require("path");
 var bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 var mongodb_url = "mongodb+srv://Andre:123@cluster0.qgywnv0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const cors= require("cors")
-const dotenv = require('dotenv');
-dotenv.config();
-
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const app = express();
+
+// CORS e cookies (ajusta origin conforme o teu frontend)
+app.use(cors({ origin: process.env.FRONTEND_ORIGIN || 'http://localhost:8100', credentials: true }));
+app.use(cookieParser());
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",  // React
-      "http://127.0.0.1:3000",  // React (alternativo)
-      "http://localhost:8100",  // Ionic
-      "http://127.0.0.1:8100", // Ionic (alternativo)
-      "https://ionicseawatch.onrender.com" ,
-      "https://ionicseawatch.onrender.com"
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // Métodos permitidos
-    allowedHeaders: ["Content-Type", "Authorization"], // Headers permitidos
-    credentials: true, // Permite cookies e autenticação
-  })
-);
-
-const AuthRoute = require("./routes/AuthRoute");
-<<<<<<< Updated upstream
-const VerificationRoutes= require('./routes/VerificationRoute')
-=======
-const listasRouter = require('./routes/ListaRoute');
+// Registar rotas (exemplo)
 const plantacoesRouter = require('./routes/platacoesRoute');
+const listasRouter = require('./routes/ListaRoute');
+const veterinariosRouter = require('./routes/VeterinariosRoute');
+
 app.use('/', plantacoesRouter);
 app.use('/', listasRouter);
->>>>>>> Stashed changes
+app.use('/', veterinariosRouter);
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -52,10 +37,13 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('partials', path.join(__dirname, 'views', 'partials'));
 app.set('view engine', 'ejs');
 
-app.use(cookieParser());
 
+const AuthRoute = require("./routes/AuthRoute");
+const VerificationRoutes= require('./routes/VerificationRoute')
 app.use(AuthRoute);
 app.use(VerificationRoutes);
+const { me } = require('./controllers/AuthController');
+app.get('/me', me);
 
 // rota de diagnóstico rápida
 app.get('/ping', (req, res) => res.status(200).send('pong'));

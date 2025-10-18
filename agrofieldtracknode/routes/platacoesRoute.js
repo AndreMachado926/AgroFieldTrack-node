@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getAllplantacoes,createPlantacao } = require('../controllers/PlantacoesControler');
+// ajuste para o nome do ficheiro do controller que tens (PlantacoesControler.js)
+const { getAllPlantacoes, createPlantacao } = require('../controllers/PlantacoesControler');
 
-
-router.get('/plantacoes', getAllplantacoes);
+router.get('/plantacoes/:dono_id', getAllPlantacoes);
+router.get('/plantacoes', getAllPlantacoes); // fallback para usar token no cookie
 router.post('/plantacoes', createPlantacao);
 
 module.exports = router;

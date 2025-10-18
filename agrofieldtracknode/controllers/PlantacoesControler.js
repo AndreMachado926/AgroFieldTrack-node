@@ -1,42 +1,69 @@
-const Plantacoes = require('../models/PlantacoesModel');
+const Plantacao = require('../models/PlantacoesModel'); // ajuste se o nome do model for diferente
+const jwt = require('jsonwebtoken');
+const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 
-const getAllplantacoes = async (req, res) => {
+const getAllPlantacoes = async (req, res) => {
   try {
-    const plantacoes = await Plantacoes.find().lean();
+    let donoId = req.params?.dono_id || null;
+
+    // se não veio param, tenta token no cookie/authorization
+    if (!donoId) {
+      const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+      if (!token) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+      }
+      let decoded;
+      try {
+        decoded = jwt.verify(token, jwtKey);
+      } catch (err) {
+        return res.status(401).json({ success: false, message: 'Invalid token' });
+      }
+      donoId = decoded.user_id || decoded.id || decoded._id || decoded.sub;
+      if (!donoId) return res.status(401).json({ success: false, message: 'Invalid token payload' });
+    }
+
+    const plantacoes = await Plantacao.find({ dono_id: donoId }).lean();
     return res.status(200).json({ success: true, count: plantacoes.length, data: plantacoes });
   } catch (err) {
-    console.error('Erro ao obter platações:', err);
-    return res.status(500).json({ success: false, message: 'Erro ao obter platações' });
+    console.error('Erro ao obter plantações:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao obter plantações' });
   }
 };
 
-// função para adicionar um animal
 const createPlantacao = async (req, res) => {
   try {
-    const { planta, localizacaoX, localizacaoY, dono_id } = req.body;
+    const { planta, localizacaoX, localizacaoY } = req.body;
+    let dono_id = req.body?.dono_id || null;
 
-    // Validação dos campos obrigatórios
-    if (!planta) {
-      return res.status(400).json({
-        success: false,
-        message: 'Campos obrigatórios: planta, localizacaoX, localizacaoY, dono_id'
-      });
+    if (!dono_id) {
+      const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, jwtKey);
+          dono_id = decoded.user_id || decoded.id || decoded._id || decoded.sub;
+        } catch (err) {
+          // ignore - will validate below
+        }
+      }
     }
 
-    const plantacao = new Plantacoes({
+    if (!planta || !dono_id) {
+      return res.status(400).json({ success: false, message: 'Campos obrigatórios: planta, dono_id' });
+    }
+
+    const nova = new Plantacao({
       planta: String(planta).trim(),
-      localizacaoX: Number(0),
-      localizacaoY: Number(0),
-      dono_id:Number(1)
+      localizacaoX: Number(localizacaoX || 0),
+      localizacaoY: Number(localizacaoY || 0),
+      dono_id
     });
 
-    await plantacao.save();
-
-    return res.status(201).json({ success: true, data: plantacao });
+    await nova.save();
+    return res.status(201).json({ success: true, data: nova });
   } catch (err) {
     console.error('Erro ao criar plantação:', err);
     return res.status(500).json({ success: false, message: 'Erro ao criar plantação' });
   }
 };
 
-module.exports = {getAllplantacoes ,createPlantacao};
+module.exports = { getAllPlantacoes, createPlantacao };
