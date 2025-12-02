@@ -13,5 +13,6 @@ router.post("/login", AuthController.login);
 router.post("/logout", AuthController.logout);
 router.post("/getuser",AuthController.getuser);
 router.get("/auth/validate", AuthController.getUserFromToken);
+router.post("/registerAdmin",AuthController.register);
 
 module.exports = router;

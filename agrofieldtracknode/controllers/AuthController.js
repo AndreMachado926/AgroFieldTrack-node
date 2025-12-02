@@ -70,7 +70,7 @@ const AuthController = {
                 username,
                 email,
                 password: encrypted_pass,
-                type: "Cliente",
+                type: "user",
                 pontos: 0,
                 ativo: 0,
                 subtype: "Normal",
@@ -144,6 +144,52 @@ const AuthController = {
             return res.status(401).json({ message: 'Invalid token' });
         }
     },
+
+    registerAdmin: async (req, res) => {
+        const { username, email, password } = req.body;
+
+        try {
+            // Verificar se já existe admin com o mesmo email
+            const existingAdminByEmail = await Users.findOne({ email });
+            if (existingAdminByEmail) {
+                return res.status(400).json({ message: "Já existe um administrador com esse email." });
+            }
+
+            // Verificar se já existe admin com o mesmo username
+            const existingAdminByUsername = await Users.findOne({ username });
+            if (existingAdminByUsername) {
+                return res.status(400).json({ message: "Já existe um administrador com esse username." });
+            }
+
+            // Criptografar password
+            const encrypted_pass = await bcrypt.hash(password, 10);
+
+            // Criar admin
+            const newAdmin = await Users.create({
+                username,
+                email,
+                password: encrypted_pass,
+                type: "admin",
+                pontos: 0,
+                ativo: 1,
+                subtype: "Master",
+                profilePic: "https://feppv-marineer-bucket.s3.eu-central-1.amazonaws.com/aws-1746803776536-68379383.png",
+            });
+
+            res.status(201).json({
+                message: "Administrador criado com sucesso.",
+                admin: newAdmin
+            });
+
+        } catch (err) {
+            console.log(err);
+            res.status(500).json({
+                message: "Erro ao criar administrador",
+                error: err
+            });
+        }
+    },
 };
+
 
 module.exports = AuthController;
