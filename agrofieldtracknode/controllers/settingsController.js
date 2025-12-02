@@ -99,6 +99,39 @@ const settingsController = {
     }
   },
 
+  // Edit password only (dedicated route)
+  editpassword: async (req, res) => {
+    try {
+      const { oldPassword, newPassword } = req.body;
+      const userId = res.locals.user._id;
+
+      if (!oldPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current password and new password are required' });
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Verify old password
+      const validPassword = await bcrypt.compare(oldPassword, user.password);
+      if (!validPassword) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+
+      // Hash and update new password
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(newPassword, salt);
+      await user.save();
+
+      res.status(200).json({ message: 'Password updated successfully' });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      res.status(500).json({ error: 'Error updating password' });
+    }
+  },
+
 };
 
 module.exports = settingsController; 

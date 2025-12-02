@@ -7,7 +7,7 @@ const cookieParser = require("cookie-parser");
 const app = express();
 
 // MongoDB connection string (substitua USER e PASS pelos valores corretos)
-const mongodb_url = "mongodb+srv://Andre:123@cluster0.qgywnv0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const mongodb_url = "mongodb+srv://andre:1234@cluster0.i6xw3.mongodb.net/?appName=Cluster0";
 
 // Configuração mongoose
 mongoose.set('strictQuery', false);
@@ -77,6 +77,7 @@ const remediosRouter = require('./routes/RemediosRoute');
 const AuthRoute = require("./routes/AuthRoute");
 const VerificationRoutes = require('./routes/VerificationRoute');
 const MarketRoutes = require('./routes/MarketRoute');
+const SettingsRoutes = require('./routes/SettingsRoute');
 
 
 const safeUse = (name, r) => {
@@ -97,6 +98,7 @@ safeUse('remediosRouter', remediosRouter);
 safeUse('plantacoesRouter', plantacoesRouter);
 safeUse('listasRouter', listasRouter);
 safeUse('veterinariosRouter', veterinariosRouter);
+safeUse('SettingsRoutes', SettingsRoutes);
 
 app.use(AuthRoute);
 app.use(VerificationRoutes);

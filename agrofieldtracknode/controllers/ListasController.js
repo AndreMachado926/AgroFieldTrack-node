@@ -70,8 +70,8 @@ const createAnimal = async (req, res) => {
       nome: String(nome).trim(),
       idade: Number(idade),
       raca: String(raca),
-      localizacaoX: Number(localizacaoX || 0),
-      localizacaoY: Number(localizacaoY || 0),
+      localizacaoX: 0,
+      localizacaoY: 0,
       dono_id
     });
 

@@ -9,5 +9,6 @@ const { upload, uploadPeixe } = require('../middleware/storage');
 app.post('/settings/profile-pic', is_auth,upload.single('file'), SettingsController.updateProfilePic);
 app.post('/settings/delete-account',is_auth, SettingsController.deleteAccount);
 app.put('/settings/profile', is_auth, SettingsController.updateProfile);
+app.post('/settings/editpassword', is_auth, SettingsController.editpassword);
 
 module.exports = app;
