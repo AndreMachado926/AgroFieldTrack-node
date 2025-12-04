@@ -25,11 +25,16 @@ mongoose.connect(mongodb_url, {
   process.exit(1); // encerra app se não conseguir conectar
 });
 
-// Middleware
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:8100',
+  origin: [
+    "http://localhost:8100",                // Ionic quando estás a desenvolver
+    "https://agrofieldtrack.onrender.com"   // A tua app Ionic em produção
+  ],
   credentials: true
 }));
+
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
