@@ -7,8 +7,8 @@ require('dotenv').config();
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'Seawatchletsgo@gmail.com',
-    pass: 'jxzs eafr vyrg yrop'
+    user: 'agrofieldtrack@gmail.com',
+    pass: 'sfrb qyuz mrkw qmls'
   }
 });
 
@@ -25,7 +25,7 @@ const sendRecoveryEmail = async (toEmail) => {
 
 
   const mailOptions = {
-    from: '"Seawatch" <Seawatchletsgo@gmail.com>',
+    from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
     to: toEmail,
     subject: 'Recuperação de Palavra-Passe',
     text: `Clique no link abaixo para redefinir a sua palavra-passe: ${recoveryLink}`,
@@ -40,7 +40,7 @@ const sendVerificationEmail = async (user, token) => {
   console.log("Enviando verificação para:", user.email, "com link:", verificationLink);
 
   const mailOptions = {
-    from: '"Seawatch" <Seawatchletsgo@gmail.com>',
+    from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
     to: user.email,
     subject: 'Verificação de E-mail',
     text: `Clique no link abaixo para verificar sua conta: ${verificationLink}`,
