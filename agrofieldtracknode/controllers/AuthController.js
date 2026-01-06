@@ -17,39 +17,44 @@ const AuthController = {
     },
 
     login: async (req, res) => {
-        var username = req.body.username;
-        var pass = req.body.password;
+        const { username, password } = req.body;
         try {
-            const user = await Users.findOne({ username: username });
-            if (!user) {
-                return res.status(400).send("User does not exist");
-            }
-            if (user.ativo === 0) {
-                return res.status(400).send("Conta não verificada. Verifique seu e-mail.");
-            }
-            if (user && (await bcrypt.compare(pass, user.password))) {
-                const token = jwt.sign(
-                    {
-                        user_id: user._id.toString(),
-                        username: user.username
+            const user = await Users.findOne({ username });
 
-                    },
-                    jwtKey,
-                    {
-                        expiresIn: "30d"
-                    }
-                );
-                const userObj = user.toObject();
-                userObj.token = token;
-                res.cookie("auth", token, { httpOnly: true, secure: false, sameSite: "Lax" });
-                return res.json(userObj);
-            } else {
-                return res.status(400).send("Wrong password");
-            }
+            if (!user) return res.status(400).send("User does not exist");
+            if (user.ativo === 0) return res.status(400).send("Conta não verificada.");
+
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) return res.status(400).send("Wrong password");
+
+            // 🔑 Gerar token
+            const jwt = require("jsonwebtoken");
+            const token = jwt.sign(
+                { user_id: user._id, username: user.username },
+                process.env.JWT_KEY || "secret",
+                { expiresIn: "1d" }
+            );
+
+            // 🔐 Envia cookie
+            res.cookie('auth', token, {
+                httpOnly: false, // não httponly, para poder ler no JS
+                secure: false,    // true se HTTPS
+                sameSite: 'lax',
+                maxAge: 24 * 60 * 60 * 1000 // 1 dia
+            });
+
+            // 🔑 Envia token também no body
+            return res.json({
+                _id: user._id,
+                username: user.username,
+                token // 🔹 token disponível no frontend
+            });
+
         } catch (err) {
-            return res.status(400).send(err);
+            return res.status(500).send(err.message || "Erro no servidor");
         }
     },
+
 
     register: async (req, res) => {
         const { username, email, password } = req.body;
@@ -134,13 +139,21 @@ const AuthController = {
 
     me: (req, res) => {
         try {
-            const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+            const token = req.cookies?.auth
+                || (req.headers.authorization?.startsWith('Bearer ')
+                    ? req.headers.authorization.split(' ')[1]
+                    : null);
+
             if (!token) return res.status(401).json({ message: 'Not authenticated' });
+
             const decoded = jwt.verify(token, jwtKey);
+
             const userId = decoded.user_id || decoded.id || decoded._id || decoded.sub;
             if (!userId) return res.status(401).json({ message: 'Invalid token payload' });
+
             return res.json({ user_id: userId });
         } catch (err) {
+            console.error("Error in /me:", err);
             return res.status(401).json({ message: 'Invalid token' });
         }
     },

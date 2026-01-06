@@ -1,51 +1,39 @@
-const Animal = require('../models/AnimaisModel');
-const User = require('../models/UserModel');
-const jwt = require('jsonwebtoken');
+// controllers/ListasController.js
+import Animal from '../models/AnimaisModel.js';
+import User from '../models/UserModel.js';
+import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import mongoose from 'mongoose';
+
 const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 
-const getAllAnimais = async (req, res) => {
+// Retorna todos os animais de um usuário
+export const getAllAnimais = async (req, res) => {
   try {
-    // allow explicit dono_id via route param (/animais/:dono_id)
-    const paramDonoId = req.params?.dono_id;
-    let donoId = paramDonoId;
+    const dono_id = req.params.dono_id;
 
-    // if no param, try token from cookie or Authorization header
-    if (!donoId) {
-      const token = req.cookies?.jwt || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
-      if (!token) {
-        return res.status(401).json({ success: false, message: 'Not authenticated' });
-      }
-      let decoded;
-      try {
-        decoded = jwt.verify(token, jwtKey);
-      } catch (err) {
-        return res.status(401).json({ success: false, message: 'Invalid token' });
-      }
-      donoId = decoded.user_id || decoded.id || decoded._id;
-      if (!donoId) {
-        return res.status(401).json({ success: false, message: 'Invalid token payload' });
-      }
+    if (!dono_id) {
+      return res.status(400).json({ message: "Dono ID é obrigatório" });
     }
 
-    const animais = await Animal.find({ dono_id: donoId }).lean();
-    return res.status(200).json({
-      success: true,
-      count: animais.length,
-      data: animais
-    });
+    const animais = await Animal.find({ dono_id });
+
+    if (!animais || animais.length === 0) {
+      return res.status(200).json({ data: [], message: "Nenhum animal encontrado para este usuário" });
+    }
+
+    return res.status(200).json({ data: animais });
   } catch (err) {
-    console.error('Erro ao obter animais:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Erro ao obter animais'
-    });
+    console.error("Erro ao buscar animais:", err);
+    return res.status(500).json({ message: "Erro interno no servidor" });
   }
 };
-const createAnimal = async (req, res) => {
+
+// Cria um novo animal
+export const createAnimal = async (req, res) => {
   try {
     const { nome, raca, idade, localizacaoX, localizacaoY } = req.body;
 
-    // get dono_id from body or from token
     let dono_id = req.body?.dono_id;
     if (!dono_id) {
       const token = req.cookies?.jwt || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
@@ -54,7 +42,7 @@ const createAnimal = async (req, res) => {
           const decoded = jwt.verify(token, jwtKey);
           dono_id = decoded.user_id || decoded.id || decoded._id;
         } catch (err) {
-          // ignore here, will validate below
+          // ignore
         }
       }
     }
@@ -70,8 +58,8 @@ const createAnimal = async (req, res) => {
       nome: String(nome).trim(),
       idade: Number(idade),
       raca: String(raca),
-      localizacaoX: 0,
-      localizacaoY: 0,
+      localizacaoX: localizacaoX ?? 0,
+      localizacaoY: localizacaoY ?? 0,
       dono_id
     });
 
@@ -83,7 +71,9 @@ const createAnimal = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Erro ao criar animal' });
   }
 };
-const updateAnimalLocation = async (req, res) => {
+
+// Atualiza a localização do animal
+export const updateAnimalLocation = async (req, res) => {
   try {
     const animalId = req.params?.id || req.body?.id;
     if (!animalId) return res.status(400).json({ success: false, message: 'animal id obrigatório (params.id ou body.id)' });
@@ -94,7 +84,6 @@ const updateAnimalLocation = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Pelo menos localizacaoX ou localizacaoY obrigatório' });
     }
 
-    // buscar documento atual
     const doc = await Animal.findById(animalId).select('localizacaoX localizacaoY locationHistory');
     if (!doc) return res.status(404).json({ success: false, message: 'Animal não encontrado' });
 
@@ -103,12 +92,10 @@ const updateAnimalLocation = async (req, res) => {
     const parsedNewX = newX !== undefined ? Number(newX) : prevX;
     const parsedNewY = newY !== undefined ? Number(newY) : prevY;
 
-    // se não mudou, devolve sem alterações
     if (parsedNewX === prevX && parsedNewY === prevY) {
       return res.status(200).json({ success: true, message: 'Coordenadas inalteradas', data: doc });
     }
 
-    // atômico: push histórico e set novas coordenadas
     const updated = await Animal.findByIdAndUpdate(
       animalId,
       {
@@ -124,5 +111,3 @@ const updateAnimalLocation = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Erro ao actualizar localização' });
   }
 };
-
-module.exports = { getAllAnimais, createAnimal, updateAnimalLocation, }

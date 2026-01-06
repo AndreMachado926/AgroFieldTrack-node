@@ -17,22 +17,25 @@ mongoose.connect(mongodb_url, {
   serverSelectionTimeoutMS: 5000, // timeout após 5 segundos
   socketTimeoutMS: 45000, // timeout socket após 45 segundos
 })
-.then(() => {
-  console.log("Conexão com MongoDB estabelecida com sucesso!");
-})
-.catch(err => {
-  console.error("Erro ao conectar com MongoDB:", err.message);
-  process.exit(1); // encerra app se não conseguir conectar
-});
+  .then(() => {
+    console.log("Conexão com MongoDB estabelecida com sucesso!");
+  })
+  .catch(err => {
+    console.error("Erro ao conectar com MongoDB:", err.message);
+    process.exit(1); // encerra app se não conseguir conectar
+  });
 
 
 app.use(cors({
   origin: [
-    "http://localhost:8100",                // Ionic quando estás a desenvolver
-    "https://agrofieldtrack-ionic-e6ru.onrender.com"   // A tua app Ionic em produção
+    "http://localhost:8100",
+    "http://localhost:8000",
+    "https://agrofieldtrack-ionic-e6ru.onrender.com"
   ],
   credentials: true
 }));
+
+
 
 
 app.use(cookieParser());
