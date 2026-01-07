@@ -86,6 +86,7 @@ const AuthRoute = require("./routes/AuthRoute");
 const VerificationRoutes = require('./routes/VerificationRoute');
 const MarketRoutes = require('./routes/MarketRoute');
 const SettingsRoutes = require('./routes/SettingsRoute');
+const ChatsRoutes = require('./routes/ChatsRoute');
 
 
 const safeUse = (name, r) => {
@@ -107,6 +108,7 @@ safeUse('plantacoesRouter', plantacoesRouter);
 safeUse('listasRouter', listasRouter);
 safeUse('veterinariosRouter', veterinariosRouter);
 safeUse('SettingsRoutes', SettingsRoutes);
+safeUse('ChatsRoutes', ChatsRoutes);
 
 app.use(AuthRoute);
 app.use(VerificationRoutes);
