@@ -57,58 +57,77 @@ const settingsController = {
 
 
 
-    updateusername: async (req, res) => {
-      try {
-        const { username } = req.body;
-        const userId = res.locals.user._id;
+  updateusername: async (req, res) => {
+    try {
+      const { id, username } = req.body;
 
-        const user = await User.findById(userId);
-        if (!user) {
-          return res.status(404).json({ error: 'User not found' });
-        }
-
-        user.username = username;
-        await user.save();
-
-        res.status(200).json({ message: 'Username updated successfully', user });
-      } catch (error) {
-        console.error('Error updating username:', error);
-        res.status(500).json({ error: 'Error updating username' });
+      // Verifica se os dados foram enviados
+      if (!id || !username) {
+        return res.status(400).json({ message: "ID e username são obrigatórios." });
       }
-    },
+
+      // Verifica se o username já existe
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(409).json({ message: "Username já está em uso." });
+      }
+
+      // Atualiza o username
+      const updatedUser = await User.findByIdAndUpdate(
+        id,
+        { username },
+        { new: true } // Retorna o documento atualizado
+      );
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+
+      return res.status(200).json({ username: updatedUser.username });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Erro ao atualizar username." });
+    }
+  },
 
   // Edit password only (dedicated route)
   editpassword: async (req, res) => {
     try {
-      const { oldPassword, newPassword } = req.body;
-      const userId = res.locals.user._id;
+      const { id, oldPassword, newPassword } = req.body;
 
-      if (!oldPassword || !newPassword) {
-        return res.status(400).json({ error: 'Current password and new password are required' });
+      // Valida dados recebidos
+      if (!id || !oldPassword || !newPassword) {
+        return res.status(400).json({ message: "ID, senha antiga e nova senha são obrigatórios." });
       }
 
-      const user = await User.findById(userId);
+      // Busca usuário pelo ID
+      const user = await User.findById(id);
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        return res.status(404).json({ message: "Usuário não encontrado." });
       }
 
-      // Verify old password
-      const validPassword = await bcrypt.compare(oldPassword, user.password);
-      if (!validPassword) {
-        return res.status(400).json({ error: 'Current password is incorrect' });
+      // Verifica se a senha antiga confere
+      const passwordMatches = await bcrypt.compare(oldPassword, user.password);
+      if (!passwordMatches) {
+        return res.status(401).json({ message: "Senha antiga incorreta." });
       }
 
-      // Hash and update new password
+      // Gera hash da nova senha
       const salt = await bcrypt.genSalt(10);
-      user.password = await bcrypt.hash(newPassword, salt);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      // Atualiza a senha
+      user.password = hashedPassword;
       await user.save();
 
-      res.status(200).json({ message: 'Password updated successfully' });
-    } catch (error) {
-      console.error('Error updating password:', error);
-      res.status(500).json({ error: 'Error updating password' });
+      return res.status(200).json({ message: "Senha alterada com sucesso!" });
+
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Erro ao alterar senha." });
     }
   },
+
 
 };
 
