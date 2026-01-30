@@ -54,9 +54,6 @@ const settingsController = {
       res.status(500).json({ error: 'Error deleting account' });
     }
   },
-
-
-
   updateusername: async (req, res) => {
     try {
       const { id, username } = req.body;
@@ -89,8 +86,6 @@ const settingsController = {
       return res.status(500).json({ message: "Erro ao atualizar username." });
     }
   },
-
-  // Edit password only (dedicated route)
   editpassword: async (req, res) => {
     try {
       const { id, oldPassword, newPassword } = req.body;
@@ -127,8 +122,24 @@ const settingsController = {
       return res.status(500).json({ message: "Erro ao alterar senha." });
     }
   },
+  getuserinfo: async (req, res) => {
+    try {
+      const { id } = req.body; // ID enviado pelo front-end
+      if (!id) {
+        return res.status(400).json({ error: "ID do usuário é obrigatório" });
+      }
 
+      const user = await User.findById(id).select('-password'); // exclui senha do retorno
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
 
+      res.status(200).json(user); // retorna todas as informações do usuário (menos senha)
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao buscar informações do usuário" });
+    }
+  },
 };
 
 module.exports = settingsController; 

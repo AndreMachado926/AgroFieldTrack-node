@@ -10,5 +10,5 @@ app.post('/settings/profile-pic',upload.single('file'), SettingsController.updat
 app.post('/settings/delete-account', SettingsController.deleteAccount);
 app.post('/settings/username', SettingsController.updateusername);
 app.post('/settings/editpassword', SettingsController.editpassword);
-
+app.post('/settings/getuserinfo', SettingsController.getuserinfo);
 module.exports = app;
