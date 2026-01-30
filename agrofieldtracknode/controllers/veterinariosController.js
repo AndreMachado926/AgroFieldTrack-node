@@ -53,5 +53,17 @@ const createVeterinario = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Erro ao criar veterinário' });
   }
 };
-
-module.exports = { getAllVeterinarios, createVeterinario };
+const getusertype = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await Users.findById(userId).select('type').lean();
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+    }
+    return res.status(200).json({ success: true, type: user.type });
+  } catch (err) {
+    console.error('Erro ao obter tipo de usuário:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao obter tipo de usuário' });
+  }
+}
+module.exports = { getAllVeterinarios, createVeterinario, getusertype };

@@ -98,6 +98,34 @@ const ChatsController = {
                 message: err.message || "Erro ao obter mensagens do chat",
             });
         }
+    },
+    getContactsForUser: async (req, res) => {
+        const { user_id } = req.params;
+
+        try {
+            // Buscar todos os chats onde o user_id participa
+            const chats = await Chats.find({
+                $or: [
+                    { user1_id: user_id },
+                    { user2_id: user_id }
+                ]
+            });
+
+            // Mapear os IDs das pessoas com quem ele tem chat
+            const contactsIds = chats.map(chat =>
+                chat.user1_id === user_id ? chat.user2_id : chat.user1_id
+            );
+
+            // Buscar informações desses usuários
+            const contacts = await Users.find({ _id: { $in: contactsIds } })
+                .select("_id username profilePic type");
+
+            res.status(200).json(contacts);
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: err.message || "Erro no servidor" });
+        }
     }
 
 };

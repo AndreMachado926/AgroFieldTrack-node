@@ -6,5 +6,6 @@ const { getAllVeterinarios, createVeterinario } = require('../controllers/veteri
 // POST /veterinarios       -> cria um novo usuário do tipo veterinario
 router.get('/veterinarios', getAllVeterinarios);
 router.post('/veterinarios', createVeterinario);
+router.get('/veterinarios/:id/type', getusertype);
 
 module.exports = router;
