@@ -57,47 +57,25 @@ const settingsController = {
 
 
 
-  updateProfile: async (req, res) => {
-    try {
-      // O userId está disponível em res.locals.user._id, sem necessidade de pegar de req.body
-      const { username, oldPassword, newPassword } = req.body;
-      const userId = res.locals.user._id; // Pega o userId do usuário autenticado
+    updateusername: async (req, res) => {
+      try {
+        const { username } = req.body;
+        const userId = res.locals.user._id;
 
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      console.log("user:", username);
-      console.log("password antiga:", oldPassword);
-      console.log("password nova:", newPassword)
-      // Atualiza username se fornecido
-      if (username) {
+        const user = await User.findById(userId);
+        if (!user) {
+          return res.status(404).json({ error: 'User not found' });
+        }
+
         user.username = username;
+        await user.save();
+
+        res.status(200).json({ message: 'Username updated successfully', user });
+      } catch (error) {
+        console.error('Error updating username:', error);
+        res.status(500).json({ error: 'Error updating username' });
       }
-
-      // Atualiza password se fornecido
-      if (newPassword && newPassword.trim()) {
-        if (!oldPassword) {
-          return res.status(400).json({ error: 'Current password is required to change password' });
-        }
-
-        const validPassword = await bcrypt.compare(oldPassword, user.password);
-        if (!validPassword) {
-          return res.status(400).json({ error: 'Current password is incorrect' });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(newPassword, salt);
-      }
-
-      await user.save();
-
-      res.status(200).json({ message: 'Profile updated successfully', user });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      res.status(500).json({ error: 'Error updating profile' });
-    }
-  },
+    },
 
   // Edit password only (dedicated route)
   editpassword: async (req, res) => {
