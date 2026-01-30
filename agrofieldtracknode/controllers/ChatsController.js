@@ -3,41 +3,57 @@ const bcrypt = require("bcrypt")
 const jwt = require("jsonwebtoken")
 const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 const { sendVerificationEmail } = require("../services/emailservice");
+const Chats = require("../models/ChatsModel");
+
 const ChatsController = {
 
     getOrCreateChat: async (req, res) => {
-        const Chats = require("../models/ChatsModel");
-        const { user1_id, user1_type, user2_id, user2_type } = req.params;
+        const { user1_id, user2_id } = req.params;
 
         try {
-            // procura chat existente, independente da ordem dos usuários
+            // 1️⃣ Procurar chat existente (ordem indiferente)
             let chat = await Chats.findOne({
                 $or: [
-                    { user1_id, user1_type, user2_id, user2_type },
-                    { user1_id: user2_id, user1_type: user2_type, user2_id: user1_id, user2_type: user1_type }
+                    { user1_id, user2_id },
+                    { user1_id: user2_id, user2_id: user1_id }
                 ]
             });
 
-            // se não existir, cria um novo chat
-            if (!chat) {
-                chat = new Chats({
-                    user1_id,
-                    user1_type,
-                    user2_id,
-                    user2_type,
-                    mensagens: []
-                });
-                await chat.save();
+            if (chat) {
+                return res.status(200).json(chat);
             }
 
-            res.status(200).json(chat);
+            // 2️⃣ Buscar utilizadores
+            const user1 = await Users.findById(user1_id).select("type");
+            const user2 = await Users.findById(user2_id).select("type");
+
+            if (!user1 || !user2) {
+                return res.status(404).json({
+                    message: "Um ou ambos os utilizadores não existem"
+                });
+            }
+
+            // 3️⃣ Criar novo chat
+            chat = new Chats({
+                user1_id,
+                user1_type: user1.type,
+                user2_id,
+                user2_type: user2.type,
+                mensagens: []
+            });
+
+            await chat.save();
+
+            res.status(201).json(chat);
+
         } catch (err) {
-            console.error(err);
-            res.status(500).json({ message: err.message || "Erro no servidor" });
+            console.error("Erro getOrCreateChat:", err);
+            res.status(500).json({
+                message: err.message || "Erro no servidor"
+            });
         }
     },
     createMessage: async (req, res) => {
-        const Chats = require("../models/ChatsModel");
         const { chatId } = req.params;
         const { sender_id, sender_type, text } = req.body; // usar 'text' para ser consistente
 
@@ -64,7 +80,26 @@ const ChatsController = {
             console.error(err);
             res.status(500).json({ message: err.message || "Erro no servidor" });
         }
+    },
+    getChatMessages: async (req, res) => {
+        const { chatId } = req.params;
+
+        try {
+            const chat = await Chats.findById(chatId).select("mensagens");
+
+            if (!chat) {
+                return res.status(404).json({ message: "Chat não encontrado" });
+            }
+
+            res.status(200).json(chat.mensagens);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({
+                message: err.message || "Erro ao obter mensagens do chat",
+            });
+        }
     }
+
 };
 
 
