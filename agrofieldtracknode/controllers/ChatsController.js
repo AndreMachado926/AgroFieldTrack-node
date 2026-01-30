@@ -116,9 +116,9 @@ const ChatsController = {
                 chat.user1_id === user_id ? chat.user2_id : chat.user1_id
             );
 
-            // Buscar informações desses usuários
+            // Buscar informações desses usuários: username + email + profilePic + type
             const contacts = await Users.find({ _id: { $in: contactsIds } })
-                .select("_id username profilePic type");
+                .select("_id username email profilePic type");
 
             res.status(200).json(contacts);
 
