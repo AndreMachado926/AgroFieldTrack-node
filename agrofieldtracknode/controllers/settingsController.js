@@ -6,26 +6,32 @@ const settingsController = {
   // Update profile picture
   updateProfilePic: async (req, res) => {
     try {
-      const userData = JSON.parse(req.body.user); // Parse o user do body
-      const userId = userData._id;
+      const { id: userId } = req.body; // pega o id direto do body
+
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
 
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      user.profilePic = req.file.location; // filename gerado pelo multer
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      user.profilePic = req.file.location || req.file.path; // depende de como o multer está configurado
       await user.save();
 
-      console.log("user atualizado: ", user);
+      console.log("User atualizado: ", user);
 
-      res.json({ profilePic: req.file.location }); // só retorna o filename
+      res.json({ profilePic: user.profilePic }); // retorna só o caminho da imagem
     } catch (error) {
       console.error('Error updating profile picture:', error);
       res.status(500).json({ error: 'Error updating profile picture' });
     }
   },
-
   deleteAccount: async (req, res) => {
     try {
       const userId = res.locals.user._id;
