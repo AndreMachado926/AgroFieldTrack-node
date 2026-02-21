@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Users</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #111;
+            display: flex;
+            justify-content: flex-start;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            color: #4A9782;
+        }
+
+        /* Conteúdo */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 80px auto 50px auto;
+            /* espaço abaixo navbar */
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .add-btn {
+            background-color: #4A9782;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .add-btn:hover {
+            background-color: #36735b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #222;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        .action-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .edit-btn {
+            background-color: #007bff;
+        }
+
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+
+        img.profile-pic {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: #111;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 500px;
+            color: #fff;
+            box-shadow: 0 0 10px #4A9782;
+        }
+
+        .modal-content h2 {
+            text-align: center;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: none;
+            background-color: #222;
+            color: #fff;
+        }
+
+        .modal-content button {
+            margin-top: 10px;
+        }
+
+        .close-btn {
+            background-color: #dc3545;
+            float: right;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="/admin/users">Usuários</a>
+        <a href="/admin/animais">Animais</a>
+        <a href="/admin/plantacoes">Plantações</a>
+        <a href="/admin/remedios">Remédios</a>
+    </div>
+
+    <!-- Conteúdo principal -->
+    <div class="container">
+        <h1>Admin Users</h1>
+        <!-- Botão abrir modal -->
+        <button class="add-btn" onclick="openAddModal()">Adicionar Usuário</button>
+
+        <!-- Tabela de usuários -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Foto</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Tipo</th>
+                    <th>Ativo</th>
+                    <th>Nome Completo</th>
+                    <th>Telefone</th>
+                    <th>Descrição</th>
+                    <th>Especialização</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(user=> { %>
+                    <tr>
+                        <td>
+                            <% if(user.profilePic){ %>
+                                <img src="<%= user.profilePic %>" alt="Foto de <%= user.username %>"
+                                    class="profile-pic">
+                                <% } else { %>
+                                    -
+                                    <% } %>
+                        </td>
+                        <td>
+                            <%= user.username %>
+                        </td>
+                        <td>
+                            <%= user.email %>
+                        </td>
+                        <td>
+                            <%= user.type %>
+                        </td>
+                        <td>
+                            <%= user.ativo %>
+                        </td>
+                        <td>
+                            <%= user.nome_completo || '-' %>
+                        </td>
+                        <td>
+                            <%= user.telefone || '-' %>
+                        </td>
+                        <td>
+                            <%= user.descricao || '-' %>
+                        </td>
+                        <td>
+                            <%= user.especializacao || '-' %>
+                        </td>
+                        <td>
+                            <button class="action-btn edit-btn"
+                                onclick='openEditModal(<%= JSON.stringify(user) %>)'>Editar</button>
+                            <button class="action-btn" onclick="deleteUser('<%= user._id %>')">Deletar</button>
+                        </td>
+                    </tr>
+                    <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Único (Adicionar/Editar) -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">×</span>
+            <h2 id="modalTitle">Adicionar Usuário</h2>
+            <form id="userForm">
+                <input type="hidden" name="id" id="userId">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Senha">
+                <select name="type" required>
+                    <option value="">Selecione Tipo</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="veterinario">Veterinário</option>
+                </select>
+                <input type="text" name="nome_completo" placeholder="Nome completo">
+                <input type="text" name="telefone" placeholder="Telefone">
+                <input type="text" name="descricao" placeholder="Descrição">
+                <input type="text" name="especializacao" placeholder="Especialização">
+                <button type="submit" class="add-btn">Adicionar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("userModal");
+        const form = document.getElementById("userForm");
+        const modalTitle = document.getElementById("modalTitle");
+
+        function openAddModal() {
+            modal.style.display = "block";
+            form.reset();
+            document.getElementById("userId").value = "";
+            form.querySelector("button[type=submit]").textContent = "Adicionar";
+            modalTitle.textContent = "Adicionar Usuário";
+        }
+
+        function openEditModal(user) {
+            modal.style.display = "block";
+            document.getElementById("userId").value = user._id;
+            form.username.value = user.username || '';
+            form.email.value = user.email || '';
+            form.password.value = ''; // não mostrar senha
+            form.type.value = user.type || '';
+            form.nome_completo.value = user.nome_completo || '';
+            form.telefone.value = user.telefone || '';
+            form.descricao.value = user.descricao || '';
+            form.especializacao.value = user.especializacao || '';
+
+            form.querySelector("button[type=submit]").textContent = "Salvar Alterações";
+            modalTitle.textContent = "Editar Usuário";
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+            form.reset();
+            document.getElementById("userId").value = "";
+            form.querySelector("button[type=submit]").textContent = "Adicionar";
+            modalTitle.textContent = "Adicionar Usuário";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Submit Add/Edit
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(form).entries());
+
+            let url = "/admin/users/add";
+            if (data.id) { // modo edição
+                url = "/admin/users/edit"; // sem :id
+                if (!data.password) delete data.password; // remove password se vazio
+            }
+
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(data.id ? "Usuário editado com sucesso!" : "Usuário adicionado com sucesso!");
+                        window.location.reload();
+                    } else {
+                        alert("Erro: " + result.message);
+                    }
+                })
+                .catch(err => alert("Erro: " + err.message));
+        });
+
+        function deleteUser(userId) {
+            if (confirm("Tem certeza que deseja deletar este usuário?")) {
+                fetch(`/admin/users/delete/${userId}`, { method: "DELETE" })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Usuário deletado com sucesso!");
+                            window.location.reload();
+                        } else {
+                            alert("Erro ao deletar usuário: " + data.message);
+                        }
+                    })
+                    .catch(err => alert("Erro ao deletar usuário: " + err.message));
+            }
+        }
+    </script>
+
+</body>
+
+</html>

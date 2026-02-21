@@ -3,6 +3,7 @@ const path = require("path");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const backoficeRoutes = require("./routes/backoficeRoute");
 
 const app = express();
 
@@ -64,7 +65,7 @@ app.use((req, res, next) => {
   }
 });
 
-// view engine
+app.use("/admin", backoficeRoutes);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
@@ -124,6 +125,8 @@ const { me } = require('./controllers/AuthController');
 const { env } = require('process');
 app.get('/me', me);
 
+app.set("view engine", "ejs");
+app.set("views", __dirname + "/views");
 
 // global error handler (simple)
 app.use((err, req, res, next) => {
