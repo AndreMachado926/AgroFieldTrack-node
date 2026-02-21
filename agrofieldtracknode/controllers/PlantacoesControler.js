@@ -108,5 +108,45 @@ const createPlantacao = async (req, res) => {
     });
   }
 };
+const editplantacoes = async (req, res) => {
+  try {
+    const { id, nome, planta, pontosx, pontosy } = req.body;
 
-module.exports = { getPlantacoes, createPlantacao };
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID da plantação é obrigatório' });
+    }
+
+    const plantacao = await Plantacao.findById(id);
+    if (!plantacao) {
+      return res.status(404).json({ success: false, message: 'Plantação não encontrada' });
+    }
+
+    if (nome) plantacao.nome = nome.trim();
+    if (planta) plantacao.planta = planta.trim();
+
+    // Validação de pontos
+    if ((pontosx && !Array.isArray(pontosx)) || (pontosy && !Array.isArray(pontosy))) {
+      return res.status(400).json({ success: false, message: 'pontosx e pontosy devem ser arrays' });
+    }
+
+    if (pontosx && pontosy) {
+      if (pontosx.length !== pontosy.length) {
+        return res.status(400).json({ success: false, message: 'pontosx e pontosy devem ter o mesmo tamanho' });
+      }
+      if (pontosx.length < 3) {
+        return res.status(400).json({ success: false, message: 'São necessários pelo menos 3 pontos' });
+      }
+      plantacao.pontosx = pontosx;
+      plantacao.pontosy = pontosy;
+    }
+
+    await plantacao.save();
+    return res.status(200).json({ success: true, message: 'Plantação editada com sucesso', data: plantacao });
+
+  } catch (error) {
+    console.error('Erro ao editar plantação:', error);
+    return res.status(500).json({ success: false, message: 'Erro ao editar plantação', error: error.message });
+  }
+};
+
+module.exports = { getPlantacoes, createPlantacao, editplantacoes };
