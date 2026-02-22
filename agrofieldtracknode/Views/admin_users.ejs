@@ -249,8 +249,8 @@
                 <input type="hidden" name="id" id="userId">
                 <input type="text" name="username" placeholder="Username" required>
                 <input type="email" name="email" placeholder="Email" required>
-                <input type="password" name="password" placeholder="Senha">
-                <select name="type" required>
+                <input type="password" name="password" id="passwordField" placeholder="Senha"> <select name="type"
+                    required>
                     <option value="">Selecione Tipo</option>
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
@@ -270,34 +270,47 @@
         const form = document.getElementById("userForm");
         const modalTitle = document.getElementById("modalTitle");
 
+        const passwordField = document.getElementById("passwordField");
+
         function openAddModal() {
             modal.style.display = "block";
             form.reset();
+
             document.getElementById("userId").value = "";
+            passwordField.style.display = "block";      // MOSTRA password
+            passwordField.required = true;              // Torna obrigatório no add
+
             form.querySelector("button[type=submit]").textContent = "Adicionar";
             modalTitle.textContent = "Adicionar Usuário";
         }
 
         function openEditModal(user) {
             modal.style.display = "block";
+
             document.getElementById("userId").value = user._id;
             form.username.value = user.username || '';
             form.email.value = user.email || '';
-            form.password.value = ''; // não mostrar senha
             form.type.value = user.type || '';
             form.nome_completo.value = user.nome_completo || '';
             form.telefone.value = user.telefone || '';
             form.descricao.value = user.descricao || '';
             form.especializacao.value = user.especializacao || '';
 
+            passwordField.value = "";
+            passwordField.style.display = "none";       // ESCONDE password
+            passwordField.required = false;             // Remove obrigatório
+
             form.querySelector("button[type=submit]").textContent = "Salvar Alterações";
             modalTitle.textContent = "Editar Usuário";
         }
-
         function closeModal() {
             modal.style.display = "none";
             form.reset();
+
             document.getElementById("userId").value = "";
+            passwordField.style.display = "block";
+            passwordField.required = true;
+
             form.querySelector("button[type=submit]").textContent = "Adicionar";
             modalTitle.textContent = "Adicionar Usuário";
         }

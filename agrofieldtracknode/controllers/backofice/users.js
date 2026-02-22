@@ -1,8 +1,7 @@
-const Users = require("../models/UserModel");
+const Users = require("../../models/UserModel");
 const jwt = require('jsonwebtoken');
 const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 const mongoose = require('mongoose');
-
 
 const getAllUsers = async (req, res) => {
     try {
@@ -13,7 +12,6 @@ const getAllUsers = async (req, res) => {
         res.status(500).send("Erro ao carregar usuários");
     }
 };
-
 const addUser = async (req, res) => {
     try {
         const body = req.body || {};
@@ -42,45 +40,22 @@ const addUser = async (req, res) => {
         res.json({ success: false, message: err.message });
     }
 };
-
-
-// -------------------------
-// FORMULÁRIO EDITAR USUÁRIO
-// -------------------------
-const renderEditUserForm = async (req, res) => {
+const editUser = async (req, res) => {
     try {
-        const user = await Users.findById(req.params.id);
-        if (!user) return res.status(404).send("Usuário não encontrado");
-        res.render("admin_edit_user", { user });
+        const { id, username, email, type, ativo, nome_completo, telefone, descricao, especializacao, password } = req.body;
+
+        const updateData = { username, email, type, ativo, nome_completo, telefone, descricao, especializacao };
+        if (password && password.trim() !== "") {
+            updateData.password = password; // atualiza senha somente se preenchida
+        }
+
+        await Users.findByIdAndUpdate(id, updateData);
+        res.json({ success: true });
     } catch (err) {
         console.error(err);
-        res.status(500).send("Erro ao carregar usuário");
+        res.status(400).json({ success: false, message: err.message });
     }
 };
-
-// -------------------------
-// EDITAR USUÁRIO
-// -------------------------
-const editUser = async (req, res) => {
-  try {
-    const { id, username, email, type, ativo, nome_completo, telefone, descricao, especializacao, password } = req.body;
-
-    const updateData = { username, email, type, ativo, nome_completo, telefone, descricao, especializacao };
-    if (password && password.trim() !== "") {
-      updateData.password = password; // atualiza senha somente se preenchida
-    }
-
-    await Users.findByIdAndUpdate(id, updateData);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(400).json({ success: false, message: err.message });
-  }
-};
-
-// -------------------------
-// DELETAR USUÁRIO
-// -------------------------
 const deleteUser = async (req, res) => {
     try {
         await Users.findByIdAndDelete(req.params.id);
@@ -91,13 +66,9 @@ const deleteUser = async (req, res) => {
     }
 };
 
-// -------------------------
-// EXPORTS
-// -------------------------
 module.exports = {
     getAllUsers,
     addUser,
-    renderEditUserForm,
     editUser,
     deleteUser
 };
