@@ -13,7 +13,7 @@ const AnimaisSchema = new Schema({
     raca: { type: String, required: true },  // corrigido: required dentro do objeto
     localizacaoX: { type: Number, required: true },
     localizacaoY: { type: Number, required: true },
-    dono_id: { type: Schema.Types.ObjectId, ref: 'User' },
+    dono_id: { type: Schema.Types.ObjectId, ref: 'users' },
 
     // histórico de localizações anteriores
     locationHistory: { type: [LocationEntrySchema], default: [] },

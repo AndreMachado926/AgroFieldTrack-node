@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Animais</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #111;
+            display: flex;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            color: #4A9782;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 80px auto 50px auto;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .add-btn {
+            background-color: #4A9782;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .add-btn:hover {
+            background-color: #36735b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #222;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        .action-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .edit-btn {
+            background-color: #007bff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: #111;
+            margin: 8% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 500px;
+            box-shadow: 0 0 10px #4A9782;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: none;
+            background-color: #222;
+            color: #fff;
+        }
+
+        .close-btn {
+            float: right;
+            cursor: pointer;
+            font-size: 20px;
+            color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <a href="/admin/users">Usuários</a>
+        <a href="/admin/animais">Animais</a>
+        <a href="/admin/plantacoes">Plantações</a>
+        <a href="/admin/remedios">Remédios</a>
+    </div>
+
+    <div class="container">
+        <h1>Admin Animais</h1>
+
+        <button class="add-btn" onclick="openAddModal()">Adicionar Animal</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Idade</th>
+                    <th>Raça</th>
+                    <th>Localização X</th>
+                    <th>Localização Y</th>
+                    <th>Dono ID</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% animais.forEach(animal=> { %>
+                    <tr>
+                        <td>
+                            <%= animal.nome %>
+                        </td>
+                        <td>
+                            <%= animal.idade %>
+                        </td>
+                        <td>
+                            <%= animal.raca %>
+                        </td>
+                        <td>
+                            <%= animal.localizacaoX %>
+                        </td>
+                        <td>
+                            <%= animal.localizacaoY %>
+                        </td>
+                        <td>
+                            <% if (animal.dono_id) { %>
+                                <%= animal.dono_id.username %> (<%= animal.dono_id._id %>)
+                                        <% } else { %>
+                                            -
+                                            <% } %>
+                        </td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick='openEditModal(<%= JSON.stringify(animal) %>)'>
+                                Editar
+                            </button>
+
+                            <button class="action-btn" onclick="deleteAnimal('<%= animal._id %>')">
+                                Deletar
+                            </button>
+                        </td>
+                    </tr>
+                    <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MODAL -->
+    <div id="animalModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">×</span>
+            <h2 id="modalTitle">Adicionar Animal</h2>
+
+            <form id="animalForm">
+                <input type="hidden" name="id" id="animalId">
+
+                <input type="text" name="nome" placeholder="Nome" required>
+                <input type="number" name="idade" placeholder="Idade" min="0" required>
+                <input type="text" name="raca" placeholder="Raça" required>
+                <input type="number" name="localizacaoX" placeholder="Localização X" required>
+                <input type="number" name="localizacaoY" placeholder="Localização Y" required>
+                <select name="dono_id" id="donoSelect" required>
+                    <option value="">Selecione o Dono</option>
+                    <% users.forEach(user=> { %>
+                        <% if (user.type !=='veterinario' ) { %>
+                            <option value="<%= user._id %>">
+                                <%= user.username %> (<%= user.email %>)
+                            </option>
+                            <% } %>
+                                <% }) %>
+                </select>
+                <button type="submit" class="add-btn">Adicionar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("animalModal");
+        const form = document.getElementById("animalForm");
+        const modalTitle = document.getElementById("modalTitle");
+
+        function openAddModal() {
+            modal.style.display = "block";
+            form.reset();
+            document.getElementById("animalId").value = "";
+            modalTitle.textContent = "Adicionar Animal";
+            form.querySelector("button").textContent = "Adicionar";
+        }
+
+        function openEditModal(animal) {
+            modal.style.display = "block";
+
+            document.getElementById("animalId").value = animal._id;
+            form.nome.value = animal.nome || '';
+            form.idade.value = animal.idade || '';
+            form.raca.value = animal.raca || '';
+            form.localizacaoX.value = animal.localizacaoX || '';
+            form.localizacaoY.value = animal.localizacaoY || '';
+            document.getElementById("donoSelect").value = animal.dono_id ? animal.dono_id._id : '';
+            modalTitle.textContent = "Editar Animal";
+            form.querySelector("button").textContent = "Salvar Alterações";
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+            form.reset();
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) closeModal();
+        }
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const data = Object.fromEntries(new FormData(form).entries());
+
+            let url = "/admin/animais/add";
+            if (data.id) {
+                url = "/admin/animais/edit";
+            }
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(data.id ? "Animal editado!" : "Animal adicionado!");
+                        window.location.reload();
+                    } else {
+                        alert("Erro: " + result.message);
+                    }
+                })
+                .catch(err => alert("Erro: " + err.message));
+        });
+
+        function deleteAnimal(id) {
+            if (confirm("Tem certeza que deseja deletar este animal?")) {
+                fetch(`/admin/animais/delete/${id}`, { method: "DELETE" })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Animal deletado!");
+                            window.location.reload();
+                        } else {
+                            alert("Erro: " + data.message);
+                        }
+                    });
+            }
+        }
+    </script>
+
+</body>
+
+</html>

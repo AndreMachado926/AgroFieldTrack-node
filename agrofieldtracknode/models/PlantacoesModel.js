@@ -6,7 +6,7 @@ const plantacoesSchema = new Schema({
     planta: { type: String, required: true, trim: true },
     pontosx: { type: [Number], required: true },
     pontosy: { type: [Number], required: true },
-    dono_id: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    dono_id: { type: Schema.Types.ObjectId, ref: 'users', required: true },
 }, { timestamps: true });
 
 // validação: arrays devem existir, ter mesmo comprimento e pelo menos 3 pontos

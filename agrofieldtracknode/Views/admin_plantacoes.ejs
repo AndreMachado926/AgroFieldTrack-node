@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Plantações</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #111;
+            display: flex;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            color: #4A9782;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 80px auto 50px auto;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .add-btn {
+            background-color: #4A9782;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .add-btn:hover {
+            background-color: #36735b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #222;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        .action-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .edit-btn {
+            background-color: #007bff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: #111;
+            margin: 8% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 600px;
+            box-shadow: 0 0 10px #4A9782;
+        }
+
+        .modal-content input,
+        .modal-content select,
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: none;
+            background-color: #222;
+            color: #fff;
+        }
+
+        .close-btn {
+            float: right;
+            cursor: pointer;
+            font-size: 20px;
+            color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <a href="/admin/users">Usuários</a>
+        <a href="/admin/animais">Animais</a>
+        <a href="/admin/plantacoes">Plantações</a>
+        <a href="/admin/remedios">Remédios</a>
+    </div>
+
+    <div class="container">
+        <h1>Admin Plantações</h1>
+
+        <button class="add-btn" onclick="openAddModal()">Adicionar Plantação</button>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Planta</th>
+                    <th>Pontos X</th>
+                    <th>Pontos Y</th>
+                    <th>Dono ID</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% plantacoes.forEach(plantacao=> { %>
+                    <tr>
+                        <td>
+                            <%= plantacao.nome %>
+                        </td>
+                        <td>
+                            <%= plantacao.planta %>
+                        </td>
+                        <td>
+                            <%= plantacao.pontosx.join(', ') %>
+                        </td>
+                        <td>
+                            <%= plantacao.pontosy.join(', ') %>
+                        </td>
+                        <td>
+                            <% if (plantacao.dono_id) { %>
+                                <%= plantacao.dono_id.username %> (<%= plantacao.dono_id._id %>)
+                                        <% } else { %>
+                                            -
+                                            <% } %>
+                        </td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick='openEditModal(<%= JSON.stringify(plantacao) %>)'>
+                                Editar
+                            </button>
+
+                            <button class="action-btn" onclick="deletePlantacao('<%= plantacao._id %>')">
+                                Deletar
+                            </button>
+                        </td>
+                    </tr>
+                    <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MODAL -->
+    <div id="plantacaoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">×</span>
+            <h2 id="modalTitle">Adicionar Plantação</h2>
+
+            <form id="plantacaoForm">
+                <input type="hidden" name="id" id="plantacaoId">
+
+                <input type="text" name="nome" placeholder="Nome" required>
+                <input type="text" name="planta" placeholder="Planta" required>
+                <textarea name="pontosx" placeholder="Pontos X (array JSON, ex: [1,2,3])" required></textarea>
+                <textarea name="pontosy" placeholder="Pontos Y (array JSON, ex: [4,5,6])" required></textarea>
+                <select name="dono_id" id="donoSelect" required>
+                    <option value="">Selecione o Dono</option>
+                    <% users.forEach(user=> { %>
+                        <% if (user.type !=='veterinario' ) { %>
+                            <option value="<%= user._id %>">
+                                <%= user.username %> (<%= user.email %>)
+                            </option>
+                            <% } %>
+                                <% }) %>
+                </select>
+                <button type="submit" class="add-btn">Adicionar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("plantacaoModal");
+        const form = document.getElementById("plantacaoForm");
+        const modalTitle = document.getElementById("modalTitle");
+
+        function openAddModal() {
+            modal.style.display = "block";
+            form.reset();
+            document.getElementById("plantacaoId").value = "";
+            modalTitle.textContent = "Adicionar Plantação";
+            form.querySelector("button").textContent = "Adicionar";
+        }
+
+        function openEditModal(plantacao) {
+            modal.style.display = "block";
+
+            document.getElementById("plantacaoId").value = plantacao._id;
+            form.nome.value = plantacao.nome || '';
+            form.planta.value = plantacao.planta || '';
+            form.pontosx.value = JSON.stringify(plantacao.pontosx) || '';
+            form.pontosy.value = JSON.stringify(plantacao.pontosy) || '';
+            document.getElementById("donoSelect").value = plantacao.dono_id ? plantacao.dono_id._id : '';
+            modalTitle.textContent = "Editar Plantação";
+            form.querySelector("button").textContent = "Salvar Alterações";
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+            form.reset();
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) closeModal();
+        }
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const data = Object.fromEntries(new FormData(form).entries());
+
+            let url = "/admin/plantacoes/add";
+            if (data.id) {
+                url = "/admin/plantacoes/edit";
+            }
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(data.id ? "Plantação editada!" : "Plantação adicionada!");
+                        window.location.reload();
+                    } else {
+                        alert("Erro: " + result.message);
+                    }
+                })
+                .catch(err => alert("Erro: " + err.message));
+        });
+
+        function deletePlantacao(id) {
+            if (confirm("Tem certeza que deseja deletar esta plantação?")) {
+                fetch(`/admin/plantacoes/delete/${id}`, { method: "DELETE" })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Plantação deletada!");
+                            window.location.reload();
+                        } else {
+                            alert("Erro: " + data.message);
+                        }
+                    });
+            }
+        }
+    </script>
+
+</body>
+
+</html>
