@@ -1,11 +1,25 @@
 const express = require("express");
+const http = require("http");
 const path = require("path");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const { Server } = require("socket.io");
 const backoficeRoutes = require("./routes/backoficeRoute");
+const Chats = require("./models/ChatsModel");
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:8100",
+      "http://localhost:8000",
+      "https://agrofieldtrack-ionic-e6ru.onrender.com"
+    ],
+    credentials: true
+  }
+});
 
 // MongoDB connection string (substitua USER e PASS pelos valores corretos)
 const mongodb_url = "mongodb+srv://andre:1234@cluster0.i6xw3.mongodb.net/?appName=Cluster0";
@@ -111,6 +125,44 @@ safeUse('veterinariosRouter', veterinariosRouter);
 safeUse('SettingsRoutes', SettingsRoutes);
 safeUse('ChatsRoutes', ChatsRoutes);
 
+io.on("connection", (socket) => {
+  console.log("Socket conectado:", socket.id);
+
+  socket.on("join-chat", ({ chatId, userId }) => {
+    if (!chatId) return;
+    const room = `chat_${chatId}`;
+    socket.join(room);
+    console.log(`Usuário ${userId} entrou na sala ${room}`);
+  });
+
+  socket.on("send-message", async ({ chatId, sender_id, sender_type, text }) => {
+    if (!chatId || !sender_id || !sender_type || !text) return;
+
+    try {
+      const chat = await Chats.findById(chatId);
+      if (!chat) return;
+
+      const message = {
+        sender_id,
+        sender_type,
+        text,
+        createdAt: new Date()
+      };
+
+      chat.mensagens.push(message);
+      await chat.save();
+
+      socket.to(`chat_${chatId}`).emit("new-message", message);
+    } catch (err) {
+      console.error("Erro socket send-message:", err);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Socket desconectado:", socket.id);
+  });
+});
+
 app.use(AuthRoute);
 app.use(VerificationRoutes);
 app.use(MarketRoutes)
@@ -137,7 +189,7 @@ app.use((err, req, res, next) => {
 
 // --- Start server and connect to MongoDB ---
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}...`);
 });
 

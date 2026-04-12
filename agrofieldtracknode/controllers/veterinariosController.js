@@ -1,5 +1,7 @@
 const Users = require('../models/UserModel');
 const bcrypt = require('bcrypt');
+const mongoose = require('mongoose');
+const Chats = require('../models/ChatsModel');
 
 const getAllVeterinarios = async (req, res) => {
   try {
@@ -66,4 +68,40 @@ const getusertype = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Erro ao obter tipo de usuário' });
   }
 }
-module.exports = { getAllVeterinarios, createVeterinario, getusertype };
+
+const getveterinarioschats = async (req, res) => {
+  try {
+    const vetId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(vetId)) {
+      return res.status(400).json({ success: false, message: 'ID de veterinário inválido' });
+    }
+
+    const chats = await Chats.find({
+      $and: [
+        {
+          $or: [
+            { user1_id: vetId },
+            { user2_id: vetId }
+          ]
+        },
+        {
+          mensagens: {
+            $elemMatch: {
+              sender_id: { $ne: vetId }
+            }
+          }
+        }
+      ]
+    })
+      .populate('user1_id', 'username email profilePic type nome_completo telefone')
+      .populate('user2_id', 'username email profilePic type nome_completo telefone')
+      .lean();
+
+    return res.status(200).json({ success: true, count: chats.length, data: chats });
+  } catch (err) {
+    console.error('Erro ao obter chats do veterinário:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao obter chats do veterinário' });
+  }
+};
+
+module.exports = { getAllVeterinarios, createVeterinario, getusertype, getveterinarioschats };

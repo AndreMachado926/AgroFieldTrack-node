@@ -1,5 +1,6 @@
 const Users = require("../../models/UserModel");
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 const mongoose = require('mongoose');
 
@@ -21,11 +22,13 @@ const addUser = async (req, res) => {
             return res.json({ success: false, message: "Campos obrigatórios faltando!" });
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const newUser = new Users({
             username,
             email,
             type,
-            password,
+            password: hashedPassword,
             descricao,
             especializacao,
             nome_completo,
@@ -46,7 +49,7 @@ const editUser = async (req, res) => {
 
         const updateData = { username, email, type, ativo, nome_completo, telefone, descricao, especializacao };
         if (password && password.trim() !== "") {
-            updateData.password = password; // atualiza senha somente se preenchida
+            updateData.password = await bcrypt.hash(password, 10); // criptografa senha na edição também
         }
 
         await Users.findByIdAndUpdate(id, updateData);

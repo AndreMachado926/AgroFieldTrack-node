@@ -7,5 +7,6 @@ const veterinariosController = require('../controllers/veterinariosController');
 router.get('/veterinarios', veterinariosController.getAllVeterinarios);
 router.post('/veterinarios', veterinariosController.createVeterinario);
 router.get('/veterinarios/:id/type', veterinariosController.getusertype);
+router.get('/veterinarios/:id/chats', veterinariosController.getveterinarioschats);
 
 module.exports = router;
