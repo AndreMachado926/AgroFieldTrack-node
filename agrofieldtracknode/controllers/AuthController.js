@@ -24,7 +24,7 @@ const AuthController = {
             if (!user) return res.status(400).send("User does not exist");
             if (user.ativo === 0) return res.status(400).send("Conta não verificada.");
 
-            const isMatch = await bcrypt.compare(password, user.password);
+            const isMatch = await bcrypt.compare(password, user.password, 10);
             if (!isMatch) return res.status(400).send("Wrong password");
 
             // 🔑 Gerar token
