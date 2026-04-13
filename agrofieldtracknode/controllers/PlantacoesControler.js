@@ -147,6 +147,23 @@ const editplantacoes = async (req, res) => {
     console.error('Erro ao editar plantação:', error);
     return res.status(500).json({ success: false, message: 'Erro ao editar plantação', error: error.message });
   }
+const getPlantacaoById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ success: false, message: 'ID da plantação é obrigatório' });
+    }
+
+    const plantacao = await Plantacao.findById(id).exec();
+    if (!plantacao) {
+      return res.status(404).json({ success: false, message: 'Plantação não encontrada' });
+    }
+
+    return res.status(200).json(plantacao);
+  } catch (err) {
+    console.error('Erro ao obter plantação:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao obter plantação', error: err.message });
+  }
 };
 
-module.exports = { getPlantacoes, createPlantacao, editplantacoes };
+module.exports = { getPlantacoes, getPlantacaoById, createPlantacao, editplantacoes };
