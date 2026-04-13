@@ -5,7 +5,7 @@ const Chats = require('../models/ChatsModel');
 
 const getAllVeterinarios = async (req, res) => {
   try {
-    const vets = await Users.find({ type: 'veterinario' }).select('-password').lean();
+    const vets = await Users.find({ type: 'veterinario' }).select('-password').lean().exec();
     return res.status(200).json({ success: true, count: vets.length, data: vets });
   } catch (err) {
     console.error('Erro ao obter veterinários:', err);

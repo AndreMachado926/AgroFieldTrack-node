@@ -6,8 +6,8 @@ const mongoose = require('mongoose');
 
 const getAllPlantacoes = async (req, res) => {
     try {
-        const plantacoes = await Plantacao.find().populate('dono_id');
-        const users = await Users.find();
+        const plantacoes = await Plantacao.find().populate('dono_id').exec();
+        const users = await Users.find().exec();
         res.render("admin_plantacoes", { plantacoes, users });
     } catch (err) {
         console.error(err);

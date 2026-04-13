@@ -6,8 +6,8 @@ const mongoose = require("mongoose");
 // LISTAR TODOS
 const getAllRemedios = async (req, res) => {
     try {
-        const remedios = await Remedio.find().populate('animal_id');
-        const animais = await Animal.find();
+        const remedios = await Remedio.find().populate('animal_id').exec();
+        const animais = await Animal.find().exec();
 
         res.render("admin_remedios", { remedios, animais });
     } catch (err) {

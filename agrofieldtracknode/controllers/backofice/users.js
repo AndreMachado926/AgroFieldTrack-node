@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 const getAllUsers = async (req, res) => {
     try {
-        const users = await Users.find();
+        const users = await Users.find().exec();
         res.render("admin_users", { users });
     } catch (err) {
         console.error(err);
