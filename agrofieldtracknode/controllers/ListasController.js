@@ -111,3 +111,20 @@ export const updateAnimalLocation = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Erro ao actualizar localização' });
   }
 };
+
+export const getanimalbyyd = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const animal = await Animal.findById(id);
+
+    if (!animal) {
+      return res.status(404).json({ success: false, message: 'Animal não encontrado' });
+    }
+
+    return res.status(200).json({ success: true, data: animal });
+  } catch (err) {
+    console.error('Erro ao buscar animal:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao buscar animal' });
+  }
+};
