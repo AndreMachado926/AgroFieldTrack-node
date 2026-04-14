@@ -157,6 +157,48 @@ const ChatsController = {
             console.error(err);
             res.status(500).json({ message: err.message || "Erro no servidor" });
         }
+    },
+    
+    getAllChatsForUser: async (req, res) => {
+        const { user_id } = req.params;
+
+        try {
+            // Buscar todos os chats onde o user_id participa
+            const chats = await Chats.find({
+                $or: [
+                    { user1_id: user_id },
+                    { user2_id: user_id }
+                ]
+            }).sort({ updatedAt: -1 });
+
+            // Para cada chat, adicionar informações do outro utilizador
+            const chatsWithContacts = await Promise.all(
+                chats.map(async (chat) => {
+                    const otherUserId = chat.user1_id === user_id ? chat.user2_id : chat.user1_id;
+                    const otherUser = await Users.findById(otherUserId)
+                        .select("_id username email profilePic type");
+
+                    return {
+                        _id: chat._id,
+                        chatId: chat._id,
+                        user1_id: chat.user1_id,
+                        user2_id: chat.user2_id,
+                        otherUser: otherUser,
+                        lastMessage: chat.mensagens && chat.mensagens.length > 0 
+                            ? chat.mensagens[chat.mensagens.length - 1] 
+                            : null,
+                        createdAt: chat.createdAt,
+                        updatedAt: chat.updatedAt
+                    };
+                })
+            );
+
+            res.status(200).json(chatsWithContacts);
+
+        } catch (err) {
+            console.error("Erro ao buscar chats do utilizador:", err);
+            res.status(500).json({ message: err.message || "Erro no servidor" });
+        }
     }
 
 };
