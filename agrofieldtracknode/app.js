@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const { Server } = require("socket.io");
 const backoficeRoutes = require("./routes/backoficeRoute");
 const Chats = require("./models/ChatsModel");
+const Animal = require("./models/AnimaisModel");
 
 const app = express();
 const server = http.createServer(app);
@@ -135,24 +136,36 @@ io.on("connection", (socket) => {
     console.log(`Usuário ${userId} entrou na sala ${room}`);
   });
 
-  socket.on("send-message", async ({ chatId, sender_id, sender_type, text }) => {
-    if (!chatId || !sender_id || !sender_type || !text) return;
+  socket.on("send-message", async ({ chatId, sender_id, sender_type, text, animal_id }) => {
+    if (!chatId || !sender_id || !sender_type || (!text && !animal_id)) return;
 
     try {
       const chat = await Chats.findById(chatId);
       if (!chat) return;
 
-      const message = {
+      const messageToSave = {
         sender_id,
         sender_type,
-        text,
+        text: text || "",
         createdAt: new Date()
       };
 
-      chat.mensagens.push(message);
+      if (animal_id) {
+        messageToSave.animal_id = animal_id;
+      }
+
+      chat.mensagens.push(messageToSave);
       await chat.save();
 
-      socket.to(`chat_${chatId}`).emit("new-message", message);
+      const messageToEmit = { ...messageToSave };
+      if (animal_id) {
+        const animal = await Animal.findById(animal_id).select("-__v");
+        if (animal) {
+          messageToEmit.animal_id = animal;
+        }
+      }
+
+      socket.to(`chat_${chatId}`).emit("new-message", messageToEmit);
     } catch (err) {
       console.error("Erro socket send-message:", err);
     }

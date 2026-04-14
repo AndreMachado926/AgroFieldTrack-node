@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken")
 const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 const { sendVerificationEmail } = require("../services/emailservice");
 const Chats = require("../models/ChatsModel");
+const Animal = require("../models/AnimaisModel");
 
 const ChatsController = {
 
@@ -55,10 +56,23 @@ const ChatsController = {
     },
     createMessage: async (req, res) => {
         const { chatId } = req.params;
-        const { sender_id, sender_type, text } = req.body; // usar 'text' para ser consistente
+        const { sender_id, sender_type, text, animal_id } = req.body;
 
-        if (!sender_id || !sender_type || !text) {
-            return res.status(400).json({ message: "Campos sender_id, sender_type e text são obrigatórios" });
+        console.log("createMessage received payload:", { sender_id, sender_type, text, animal_id, chatId }); // Debug log
+
+        // Validação: sender_id e sender_type são obrigatórios
+        if (!sender_id || !sender_type) {
+            console.log("Validation failed: missing sender_id or sender_type");
+            return res.status(400).json({ message: "Campos sender_id e sender_type são obrigatórios" });
+        }
+
+        // Pelo menos text ou animal_id deve estar presente e não vazio
+        const hasText = text && text.trim().length > 0;
+        const hasAnimalId = animal_id && animal_id.trim().length > 0;
+
+        if (!hasText && !hasAnimalId) {
+            console.log("Validation failed: neither text nor animal_id provided");
+            return res.status(400).json({ message: "Pelo menos text ou animal_id é obrigatório" });
         }
 
         try {
@@ -67,17 +81,32 @@ const ChatsController = {
                 return res.status(404).json({ message: "Chat não encontrado" });
             }
 
-            chat.mensagens.push({
+            const message = {
                 sender_id,
                 sender_type,
-                text,
-                createdAt: new Date() // garante timestamp
-            });
+                text: text || "",
+                createdAt: new Date()
+            };
 
+            // Validar e adicionar animal_id se fornecido
+            if (hasAnimalId) {
+                const animal = await Animal.findById(animal_id).select("-__v");
+                if (!animal) {
+                    return res.status(404).json({ message: "Animal não encontrado" });
+                }
+                message.animal_id = animal_id;
+                console.log("Animal adicionado à mensagem:", { animal_id }); // Debug log
+            }
+
+            chat.mensagens.push(message);
             await chat.save();
-            res.status(200).json(chat);
+            console.log("Mensagem guardada com sucesso:", message); // Debug log
+            
+            // Retornar as mensagens populadas
+            const updatedChat = await Chats.findById(chatId).populate("mensagens.animal_id", "-__v");
+            res.status(200).json(updatedChat.mensagens);
         } catch (err) {
-            console.error(err);
+            console.error("Erro ao criar mensagem:", err);
             res.status(500).json({ message: err.message || "Erro no servidor" });
         }
     },
@@ -85,7 +114,9 @@ const ChatsController = {
         const { chatId } = req.params;
 
         try {
-            const chat = await Chats.findById(chatId).select("mensagens");
+            const chat = await Chats.findById(chatId)
+                .select("mensagens")
+                .populate("mensagens.animal_id", "-__v");
 
             if (!chat) {
                 return res.status(404).json({ message: "Chat não encontrado" });

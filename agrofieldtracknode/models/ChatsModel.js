@@ -3,7 +3,15 @@ const mongoose = require("mongoose");
 const MensagemSchema = new mongoose.Schema({
     sender_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "users" },
     sender_type: { type: String, enum: ["user", "admin", "veterinario"], required: true },
-    text: { type: String, required: true },
+    text: {
+        type: String,
+        default: ""
+    },
+    animal_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Animal",
+        default: null
+    },
     createdAt: { type: Date, default: Date.now }
 });
 
