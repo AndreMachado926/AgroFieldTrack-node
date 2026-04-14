@@ -147,6 +147,7 @@ const editplantacoes = async (req, res) => {
     console.error('Erro ao editar plantação:', error);
     return res.status(500).json({ success: false, message: 'Erro ao editar plantação', error: error.message });
   }
+};
 const getPlantacaoById = async (req, res) => {
   try {
     const { id } = req.params;
