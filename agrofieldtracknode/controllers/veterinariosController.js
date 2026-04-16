@@ -127,7 +127,13 @@ const getSharedAnimalsForVeterinario = async (req, res) => {
         }
       ]
     })
-      .populate('mensagens.animal_id')
+      .populate({
+        path: 'mensagens.animal_id',
+        populate: {
+          path: 'dono_id',
+          select: 'nome_completo username'
+        }
+      })
       .lean();
 
     const animalsById = new Map();
