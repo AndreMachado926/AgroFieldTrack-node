@@ -27,10 +27,9 @@ const AuthController = {
             const isMatch = await bcrypt.compare(password, user.password);
             if (!isMatch) return res.status(400).send("Wrong password");
 
-            // 🔑 Gerar token
-            const jwt = require("jsonwebtoken");
+            // 🔑 Gerar token com o type do usuário
             const token = jwt.sign(
-                { user_id: user._id, username: user.username },
+                { user_id: user._id, username: user.username, type: user.type },
                 process.env.JWT_KEY || "secret",
                 { expiresIn: "1d" }
             );
@@ -47,6 +46,7 @@ const AuthController = {
             return res.json({
                 _id: user._id,
                 username: user.username,
+                type: user.type,
                 token // 🔹 token disponível no frontend
             });
 
