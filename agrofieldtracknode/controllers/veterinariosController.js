@@ -108,6 +108,7 @@ const getSharedAnimalsForVeterinario = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(vetId)) {
       return res.status(400).json({ success: false, message: 'ID de veterinário inválido' });
     }
+
     const chats = await Chats.find({
       $and: [
         {
@@ -119,12 +120,33 @@ const getSharedAnimalsForVeterinario = async (req, res) => {
         {
           mensagens: {
             $elemMatch: {
+              animal_id: { $ne: null },
               sender_id: { $ne: vetId }
             }
           }
         }
       ]
-    }).lean();
+    })
+      .populate('mensagens.animal_id')
+      .lean();
+
+    const animalsById = new Map();
+
+    chats.forEach(chat => {
+      if (!Array.isArray(chat.mensagens)) return;
+      chat.mensagens.forEach(mensagem => {
+        if (!mensagem || !mensagem.animal_id) return;
+        const animal = mensagem.animal_id;
+        const senderId = mensagem.sender_id?.toString();
+        const animalId = animal._id?.toString();
+
+        if (!animalId || senderId === vetId) return;
+        animalsById.set(animalId, animal);
+      });
+    });
+
+    const animals = Array.from(animalsById.values());
+    return res.status(200).json({ success: true, count: animals.length, data: animals });
   } catch (err) {
     console.error('Erro ao obter animais compartilhados para veterinário:', err);
     return res.status(500).json({ success: false, message: 'Erro ao obter animais compartilhados para veterinário' });
