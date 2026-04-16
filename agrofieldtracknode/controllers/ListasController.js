@@ -116,20 +116,6 @@ export const getanimalbyyd = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verificar autenticação
-    const token = req.cookies?.jwt || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'Não autenticado' });
-    }
-
-    let user_id;
-    try {
-      const decoded = jwt.verify(token, jwtKey);
-      user_id = decoded.user_id || decoded.id || decoded._id;
-    } catch (err) {
-      return res.status(401).json({ success: false, message: 'Token inválido' });
-    }
-
     const animal = await Animal.findById(id);
 
     if (!animal) {
