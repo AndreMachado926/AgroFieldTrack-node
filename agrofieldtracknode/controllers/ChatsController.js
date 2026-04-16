@@ -165,9 +165,10 @@ const ChatsController = {
                 return res.status(200).json([]);
             }
 
-            // Buscar informações desses usuários: username + email + profilePic + type
+            // Buscar todas as informações desses usuários, exceto password e __v
             const contacts = await Users.find({ _id: { $in: Array.from(contactIds) } })
-                .select("_id username email profilePic type");
+                .select("-password -__v")
+                .lean();
 
             res.status(200).json(contacts);
 
