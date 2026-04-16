@@ -7,6 +7,7 @@ router.get('/chat/:user1_id/:user2_id', ChatsController.getOrCreateChat);
 router.get("/chats/contacts/:user_id", ChatsController.getContactsForUser);
 router.get("/chats/user/:user_id", ChatsController.getAllChatsForUser);
 router.post('/chat/:chatId', ChatsController.createMessage);
+router.get('/users/:userId/contacts', ChatsController.getContactsForUser);
 
 module.exports = router;
 
