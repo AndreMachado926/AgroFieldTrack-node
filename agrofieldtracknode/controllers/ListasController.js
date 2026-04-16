@@ -114,19 +114,14 @@ export const updateAnimalLocation = async (req, res) => {
 
 export const getanimalbyyd = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const animal = await Animal.findById(id);
-
-    if (!animal) {
-      return res.status(404).json({ success: false, message: 'Animal não encontrado' });
+    const animalId = req.params.id;
+    if (!animalId) {
+      return res.status(400).json({ success: false, message: 'Animal ID é obrigatório' });
     }
 
-
-    
-    // Verificar se o animal pertence ao usuário
-    if (animal.dono_id.toString() !== user_id.toString()) {
-      return res.status(403).json({ success: false, message: 'Acesso negado' });
+    const animal = await Animal.findById(animalId);
+    if (!animal) {
+      return res.status(404).json({ success: false, message: 'Animal não encontrado' });
     }
 
     return res.status(200).json({ success: true, data: animal });
