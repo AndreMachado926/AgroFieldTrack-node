@@ -142,4 +142,4 @@ const getveterinarioschats = async (req, res) => {
   }
 };
 
-module.exports = { getAllVeterinarios, createVeterinario, getusertype, getveterinarioschats };
+module.exports = { getAllVeterinarios, createVeterinario, getusertype, getveterinarioschats,getSharedAnimalsForVeterinario };
