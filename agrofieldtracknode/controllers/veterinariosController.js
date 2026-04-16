@@ -2,6 +2,7 @@ const Users = require('../models/UserModel');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const Chats = require('../models/ChatsModel');
+const Animal = require('../models/AnimaisModel');
 
 const getAllVeterinarios = async (req, res) => {
   try {
@@ -10,6 +11,43 @@ const getAllVeterinarios = async (req, res) => {
   } catch (err) {
     console.error('Erro ao obter veterinários:', err);
     return res.status(500).json({ success: false, message: 'Erro ao obter veterinários' });
+  }
+};
+
+const getSharedAnimalsForVeterinario = async (req, res) => {
+  try {
+    const vetId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(vetId)) {
+      return res.status(400).json({ success: false, message: 'ID de veterinário inválido' });
+    }
+
+    const chats = await Chats.find({
+      $or: [
+        { user1_id: vetId },
+        { user2_id: vetId }
+      ]
+    }).lean();
+
+    const animalIds = new Set();
+    for (const chat of chats) {
+      if (!Array.isArray(chat.mensagens)) continue;
+      for (const message of chat.mensagens) {
+        if (message?.animal_id) {
+          animalIds.add(String(message.animal_id));
+        }
+      }
+    }
+
+    const validAnimalIds = Array.from(animalIds).filter(id => mongoose.Types.ObjectId.isValid(id));
+    if (validAnimalIds.length === 0) {
+      return res.status(200).json({ success: true, count: 0, data: [] });
+    }
+
+    const animals = await Animal.find({ _id: { $in: validAnimalIds } }).lean();
+    return res.status(200).json({ success: true, count: animals.length, data: animals });
+  } catch (err) {
+    console.error('Erro ao obter animais partilhados com o veterinário:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao obter animais partilhados com o veterinário' });
   }
 };
 
