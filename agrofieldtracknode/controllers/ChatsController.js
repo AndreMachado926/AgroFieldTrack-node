@@ -133,6 +133,10 @@ const ChatsController = {
     getContactsForUser: async (req, res) => {
         const { user_id } = req.params;
 
+        if (!user_id) {
+            return res.status(400).json({ message: 'user_id é obrigatório' });
+        }
+
         try {
             // Buscar todos os chats onde o user_id participa
             const chats = await Chats.find({
@@ -140,15 +144,29 @@ const ChatsController = {
                     { user1_id: user_id },
                     { user2_id: user_id }
                 ]
-            });
+            }).lean();
 
-            // Mapear os IDs das pessoas com quem ele tem chat
-            const contactsIds = chats.map(chat =>
-                chat.user1_id === user_id ? chat.user2_id : chat.user1_id
-            );
+            // Mapear os IDs das pessoas com quem ele tem chat e remover duplicados
+            const contactIds = new Set();
+            const normalizedUserId = user_id.toString();
+
+            for (const chat of chats) {
+                const user1 = chat.user1_id?.toString();
+                const user2 = chat.user2_id?.toString();
+
+                if (user1 === normalizedUserId && user2) {
+                    contactIds.add(user2);
+                } else if (user2 === normalizedUserId && user1) {
+                    contactIds.add(user1);
+                }
+            }
+
+            if (contactIds.size === 0) {
+                return res.status(200).json([]);
+            }
 
             // Buscar informações desses usuários: username + email + profilePic + type
-            const contacts = await Users.find({ _id: { $in: contactsIds } })
+            const contacts = await Users.find({ _id: { $in: Array.from(contactIds) } })
                 .select("_id username email profilePic type");
 
             res.status(200).json(contacts);
