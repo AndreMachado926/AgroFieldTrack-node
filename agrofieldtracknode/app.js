@@ -136,6 +136,14 @@ io.on("connection", (socket) => {
     console.log(`Usuário ${userId} entrou na sala ${room}`);
   });
 
+  socket.on("locationUpdate", (data) => {
+    if (!data || typeof data.lat !== 'number' || typeof data.lng !== 'number') {
+      return;
+    }
+    console.log("User location:", data);
+    socket.broadcast.emit("userMoved", data);
+  });
+
   socket.on("send-message", async ({ chatId, sender_id, sender_type, text, animal_id }) => {
     if (!chatId || !sender_id || !sender_type || (!text && !animal_id)) return;
 
