@@ -103,6 +103,8 @@ const VerificationRoutes = require('./routes/VerificationRoute');
 const MarketRoutes = require('./routes/MarketRoute');
 const SettingsRoutes = require('./routes/SettingsRoute');
 const ChatsRoutes = require('./routes/ChatsRoute');
+const AiRoute = require('./routes/AiRoute');
+const ArduinosRoute = require('./routes/ArduinosRoute')(io);
 
 
 const safeUse = (name, r) => {
@@ -125,6 +127,8 @@ safeUse('listasRouter', listasRouter);
 safeUse('veterinariosRouter', veterinariosRouter);
 safeUse('SettingsRoutes', SettingsRoutes);
 safeUse('ChatsRoutes', ChatsRoutes);
+safeUse('AiRoute', AiRoute);
+safeUse('ArduinosRoute', ArduinosRoute);
 
 io.on("connection", (socket) => {
   console.log("Socket conectado:", socket.id);
