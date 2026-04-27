@@ -53,7 +53,7 @@ const UsersSchema = new mongoose.Schema({
     },
     mode: {
         type: String,
-        enum: ['white', 'black'],
+        enum: ['white', 'dark'],
         default: 'white'
     }
 });
