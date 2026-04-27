@@ -175,7 +175,7 @@ const settingsController = {
         return res.status(400).json({ error: "ID e modo são obrigatórios" });
       }
 
-      if (!['white', 'black'].includes(mode)) {
+      if (!['white', 'dark'].includes(mode)) {
         return res.status(400).json({ error: "Modo inválido" });
       }
 
