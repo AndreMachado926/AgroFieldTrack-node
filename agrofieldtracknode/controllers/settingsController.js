@@ -146,6 +146,54 @@ const settingsController = {
       res.status(500).json({ error: "Erro ao buscar informações do usuário" });
     }
   },
-};
 
+  // Get user mode
+  getusermode: async (req, res) => {
+    try {
+      const { id } = req.body;
+      if (!id) {
+        return res.status(400).json({ error: "ID do usuário é obrigatório" });
+      }
+
+      const user = await User.findById(id).select('mode');
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      res.status(200).json({ mode: user.mode });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao buscar modo do usuário" });
+    }
+  },
+
+  // Update user mode
+  updatemode: async (req, res) => {
+    try {
+      const { id, mode } = req.body;
+      if (!id || !mode) {
+        return res.status(400).json({ error: "ID e modo são obrigatórios" });
+      }
+
+      if (!['white', 'black'].includes(mode)) {
+        return res.status(400).json({ error: "Modo inválido" });
+      }
+
+      const user = await User.findByIdAndUpdate(
+        id,
+        { mode },
+        { new: true }
+      ).select('mode');
+
+      if (!user) {
+        return res.status(404).json({ error: "Usuário não encontrado" });
+      }
+
+      res.status(200).json({ mode: user.mode });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao atualizar modo do usuário" });
+    }
+  },
+};  
 module.exports = settingsController; 

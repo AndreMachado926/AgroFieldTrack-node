@@ -50,6 +50,11 @@ const UsersSchema = new mongoose.Schema({
         required: function() {
             return this.type === 'veterinario';
         }
+    },
+    mode: {
+        type: String,
+        enum: ['white', 'black'],
+        default: 'white'
     }
 });
 
