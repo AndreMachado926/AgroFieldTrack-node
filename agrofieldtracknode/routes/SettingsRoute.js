@@ -11,4 +11,6 @@ app.post('/settings/delete-account', SettingsController.deleteAccount);
 app.post('/settings/username', SettingsController.updateusername);
 app.post('/settings/editpassword', SettingsController.editpassword);
 app.post('/settings/getuserinfo', SettingsController.getuserinfo);
+app.post('/settings/getusermode', SettingsController.getusermode);
+app.post('/settings/updatemode', SettingsController.updatemode);
 module.exports = app;
