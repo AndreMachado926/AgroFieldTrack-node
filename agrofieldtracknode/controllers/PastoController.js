@@ -51,12 +51,13 @@ const getPastoById = async (req, res) => {
       return res.status(400).json({ success: false, message: 'ID inválido' });
     }
 
-    // Obter ownerId do token
-    let ownerId = req.body?.user_id || null;
+    // Obter ownerId do body/query ou token
+    let ownerId = req.query?.user_id || req.body?.user_id || null;
+
     if (!ownerId) {
       const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
       if (!token) {
-        return res.status(400).json({ success: false, message: 'Token obrigatório' });
+        return res.status(400).json({ success: false, message: 'user_id ou token obrigatórios' });
       }
       let decoded;
       try {
@@ -161,12 +162,13 @@ const editPasto = async (req, res) => {
       return res.status(400).json({ success: false, message: 'ID inválido' });
     }
 
-    // Obter ownerId do token
+    // Obter ownerId do body ou token
     let ownerId = req.body?.user_id || dono_id || null;
+
     if (!ownerId) {
       const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
       if (!token) {
-        return res.status(400).json({ success: false, message: 'Token obrigatório' });
+        return res.status(400).json({ success: false, message: 'user_id ou token obrigatórios' });
       }
       let decoded;
       try {
@@ -238,12 +240,13 @@ const deletePasto = async (req, res) => {
       return res.status(400).json({ success: false, message: 'ID inválido' });
     }
 
-    // Obter ownerId do token
-    let ownerId = req.body?.user_id || null;
+    // Obter ownerId do query/body ou token
+    let ownerId = req.query?.user_id || req.body?.user_id || null;
+
     if (!ownerId) {
       const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
       if (!token) {
-        return res.status(400).json({ success: false, message: 'Token obrigatório' });
+        return res.status(400).json({ success: false, message: 'user_id ou token obrigatórios' });
       }
       let decoded;
       try {
