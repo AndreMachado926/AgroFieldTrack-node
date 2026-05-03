@@ -95,6 +95,7 @@ app.use((req, res, next) => {
 
 // --- Routes (require e regista depois dos parsers) ---
 const plantacoesRouter = require('./routes/platacoesRoute');
+const pastoRouter = require('./routes/PastoRoute');
 const listasRouter = require('./routes/ListaRoute');
 const veterinariosRouter = require('./routes/VeterinariosRoute');
 const remediosRouter = require('./routes/RemediosRoute');
@@ -123,6 +124,7 @@ const safeUse = (name, r) => {
 
 safeUse('remediosRouter', remediosRouter);
 safeUse('plantacoesRouter', plantacoesRouter);
+safeUse('pastoRouter', pastoRouter);
 safeUse('listasRouter', listasRouter);
 safeUse('veterinariosRouter', veterinariosRouter);
 safeUse('SettingsRoutes', SettingsRoutes);
