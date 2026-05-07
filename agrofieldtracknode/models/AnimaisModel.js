@@ -11,8 +11,8 @@ const AnimaisSchema = new Schema({
     nome: { type: String, required: true, trim: true },
     idade: { type: Number, required: true, min: 0 },
     raca: { type: String, required: true },  // corrigido: required dentro do objeto
-    localizacaoX: { type: Number, required: true },
-    localizacaoY: { type: Number, required: true },
+    localizacaoX: { type: Schema.Types.Double, required: true },
+    localizacaoY: { type: Schema.Types.Double, required: true },
     dono_id: { type: Schema.Types.ObjectId, ref: 'users' },
 
     // histórico de localizações anteriores
