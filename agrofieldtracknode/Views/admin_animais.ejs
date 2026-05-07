@@ -212,8 +212,8 @@
                 <input type="text" name="nome" placeholder="Nome" required>
                 <input type="number" name="idade" placeholder="Idade" min="0" required>
                 <input type="text" name="raca" placeholder="Raça" required>
-                <input type="number" name="localizacaoX" placeholder="Localização X" required>
-                <input type="number" name="localizacaoY" placeholder="Localização Y" required>
+                <input type="text" name="localizacaoX" placeholder="Localização X" inputmode="decimal" pattern="^-?[0-9]+([.,][0-9]+)?$" title="Use ponto ou vírgula. Números negativos aceitos." required>
+                <input type="text" name="localizacaoY" placeholder="Localização Y" inputmode="decimal" pattern="^-?[0-9]+([.,][0-9]+)?$" title="Use ponto ou vírgula. Números negativos aceitos." required>
                 <select name="dono_id" id="donoSelect" required>
                     <option value="">Selecione o Dono</option>
                     <% users.forEach(user=> { %>
@@ -240,6 +240,10 @@
             document.getElementById("animalId").value = "";
             modalTitle.textContent = "Adicionar Animal";
             form.querySelector("button").textContent = "Adicionar";
+        }
+
+        function normalizeDecimal(value) {
+            return typeof value === 'string' ? value.replace(',', '.') : value;
         }
 
         function openEditModal(animal) {
@@ -269,6 +273,8 @@
             e.preventDefault();
 
             const data = Object.fromEntries(new FormData(form).entries());
+            data.localizacaoX = normalizeDecimal(data.localizacaoX);
+            data.localizacaoY = normalizeDecimal(data.localizacaoY);
 
             let url = "/admin/animais/add";
             if (data.id) {
