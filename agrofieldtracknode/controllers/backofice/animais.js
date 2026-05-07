@@ -4,6 +4,14 @@ const jwt = require('jsonwebtoken');
 const jwtKey = process.env.JWT_KEY || 'jkdoamnwpa';
 const mongoose = require('mongoose');
 
+const parseDecimal = value => {
+    if (value === undefined || value === null) return NaN;
+    if (typeof value === 'string') {
+        value = value.trim().replace(',', '.');
+    }
+    return Number(value);
+};
+
 const getAllanimais = async (req, res) => {
     try {
         const animais = await Animal.find().populate('dono_id').exec();
@@ -18,16 +26,20 @@ const addanimal = async (req, res) => {
     try {
         const body = req.body || {};
         const { nome, idade, raca, localizacaoX, localizacaoY, dono_id } = body;
-        if (!nome || !idade || !raca || !localizacaoX || !localizacaoY || !dono_id) {
-            return res.json({ success: false, message: "Campos obrigatórios faltando!" });
+        const parsedIdade = parseDecimal(idade);
+        const parsedX = parseDecimal(localizacaoX);
+        const parsedY = parseDecimal(localizacaoY);
+
+        if (!nome || isNaN(parsedIdade) || !raca || isNaN(parsedX) || isNaN(parsedY) || !dono_id) {
+            return res.json({ success: false, message: "Campos obrigatórios faltando ou inválidos!" });
         }
 
         const newAnimal = new Animal({
             nome,
-            idade,
+            idade: parsedIdade,
             raca,
-            localizacaoX,
-            localizacaoY,
+            localizacaoX: parsedX,
+            localizacaoY: parsedY,
             dono_id
         });
 
@@ -42,8 +54,22 @@ const addanimal = async (req, res) => {
 const editAnimal = async (req, res) => {
     try {
         const { id, nome, idade, raca, localizacaoX, localizacaoY, dono_id } = req.body;
+        const parsedIdade = parseDecimal(idade);
+        const parsedX = parseDecimal(localizacaoX);
+        const parsedY = parseDecimal(localizacaoY);
 
-        const updateData = { nome, idade, raca, localizacaoX, localizacaoY, dono_id };
+        const updateData = {
+            nome,
+            idade: parsedIdade,
+            raca,
+            localizacaoX: parsedX,
+            localizacaoY: parsedY,
+            dono_id
+        };
+
+        if (!id || !nome || isNaN(parsedIdade) || !raca || isNaN(parsedX) || isNaN(parsedY) || !dono_id) {
+            return res.status(400).json({ success: false, message: 'Campos obrigatórios faltando ou inválidos!' });
+        }
 
         await Animal.findByIdAndUpdate(id, updateData);
         res.json({ success: true });
