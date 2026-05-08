@@ -167,4 +167,46 @@ const getPlantacaoById = async (req, res) => {
   }
 };
 
-module.exports = { getPlantacoes, getPlantacaoById, createPlantacao, editplantacoes };
+const deletePlantacao = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let ownerId = req.query?.user_id || req.body?.user_id;
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'ID inválido' });
+    }
+
+    if (!ownerId) {
+      const token = req.cookies?.auth || (req.headers.authorization ? req.headers.authorization.split(' ')[1] : null);
+      if (!token) {
+        return res.status(400).json({ success: false, message: 'user_id é obrigatório' });
+      }
+      let decoded;
+      try {
+        decoded = jwt.verify(token, jwtKey);
+      } catch (err) {
+        console.warn('JWT verify failed:', err && err.message);
+        return res.status(401).json({ success: false, message: 'Token inválido' });
+      }
+      ownerId = decoded?.user_id || decoded?.id || decoded?._id || decoded?.sub || null;
+      if (!ownerId) {
+        return res.status(400).json({ success: false, message: 'user_id não encontrado no token' });
+      }
+    }
+
+    const ownerFilter = typeof ownerId === 'string' && mongoose.Types.ObjectId.isValid(ownerId)
+      ? new mongoose.Types.ObjectId(ownerId)
+      : ownerId;
+
+    const plantacao = await Plantacao.findOneAndDelete({ _id: id, dono_id: ownerFilter });
+    if (!plantacao) {
+      return res.status(404).json({ success: false, message: 'Plantação não encontrada' });
+    }
+    return res.status(200).json({ success: true, message: 'Plantação deletada com sucesso', data: plantacao });
+  } catch (err) {
+    console.error('Erro ao deletar plantação:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao deletar plantação', error: err.message });
+  }
+};
+
+module.exports = { getPlantacoes, getPlantacaoById, createPlantacao, editplantacoes, deletePlantacao };
