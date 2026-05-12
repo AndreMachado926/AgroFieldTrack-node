@@ -16,7 +16,7 @@ const getAllUsers = async (req, res) => {
 const addUser = async (req, res) => {
     try {
         const body = req.body || {};
-        const { username, email, type, password, descricao, especializacao, nome_completo, telefone } = body;
+        const { username, email, type, password, descricao, especializacao, nome_completo, telefone, profilePic } = body;
 
         if (!username || !email || !password || !type) {
             return res.json({ success: false, message: "Campos obrigatórios faltando!" });
@@ -32,7 +32,8 @@ const addUser = async (req, res) => {
             descricao,
             especializacao,
             nome_completo,
-            telefone
+            telefone,
+            profilePic: profilePic || ''
         });
 
         await newUser.save();
@@ -45,11 +46,14 @@ const addUser = async (req, res) => {
 };
 const editUser = async (req, res) => {
     try {
-        const { id, username, email, type, ativo, nome_completo, telefone, descricao, especializacao, password } = req.body;
+        const { id, username, email, type, ativo, nome_completo, telefone, descricao, especializacao, password, profilePic } = req.body;
 
         const updateData = { username, email, type, ativo, nome_completo, telefone, descricao, especializacao };
         if (password && password.trim() !== "") {
             updateData.password = await bcrypt.hash(password, 10); // criptografa senha na edição também
+        }
+        if (profilePic !== undefined) {
+            updateData.profilePic = profilePic;
         }
 
         await Users.findByIdAndUpdate(id, updateData);
