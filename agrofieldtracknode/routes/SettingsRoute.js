@@ -10,6 +10,8 @@ router.use(express.urlencoded({ extended: true, limit: '10mb' }));
 router.post('/settings/profile-pic', SettingsController.updateProfilePic);
 router.post('/settings/delete-account', SettingsController.deleteAccount);
 router.post('/settings/username', SettingsController.updateusername);
+router.post('/settings/request-email-change', SettingsController.requestEmailChange);
+router.post('/settings/confirm-email-change', SettingsController.confirmEmailChange);
 router.post('/settings/editpassword', SettingsController.editpassword);
 router.post('/settings/getuserinfo', SettingsController.getuserinfo);
 router.post('/settings/getusermode', SettingsController.getusermode);

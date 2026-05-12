@@ -51,6 +51,18 @@ const UsersSchema = new mongoose.Schema({
             return this.type === 'veterinario';
         }
     },
+    pendingEmail: {
+        type: String,
+        required: false,
+    },
+    emailChangeCode: {
+        type: String,
+        required: false,
+    },
+    emailChangeExpires: {
+        type: Date,
+        required: false,
+    },
     mode: {
         type: String,
         enum: ['white', 'dark'],
