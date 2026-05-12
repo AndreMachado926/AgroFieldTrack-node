@@ -1,5 +1,6 @@
 const User = require('../models/UserModel');
 const bcrypt = require('bcrypt');
+const { sendEmailChangeCode } = require('../services/emailservice');
 
 const settingsController = {
 
@@ -90,6 +91,83 @@ const settingsController = {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Erro ao atualizar username." });
+    }
+  },
+  requestEmailChange: async (req, res) => {
+    try {
+      const { id, newEmail } = req.body;
+
+      if (!id || !newEmail) {
+        return res.status(400).json({ message: "ID e novo email são obrigatórios." });
+      }
+
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+
+      if (user.email === newEmail) {
+        return res.status(400).json({ message: "O novo email precisa ser diferente do atual." });
+      }
+
+      const emailExists = await User.findOne({ email: newEmail });
+      if (emailExists) {
+        return res.status(409).json({ message: "Este email já está em uso." });
+      }
+
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      user.pendingEmail = newEmail;
+      user.emailChangeCode = code;
+      user.emailChangeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+      await user.save();
+
+      await sendEmailChangeCode(user.email, code);
+
+      return res.status(200).json({ message: "Código enviado para seu email atual." });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Erro ao solicitar troca de email." });
+    }
+  },
+  confirmEmailChange: async (req, res) => {
+    try {
+      const { id, code } = req.body;
+
+      if (!id || !code) {
+        return res.status(400).json({ message: "ID e código são obrigatórios." });
+      }
+
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ message: "Usuário não encontrado." });
+      }
+
+      if (!user.pendingEmail || !user.emailChangeCode || !user.emailChangeExpires) {
+        return res.status(400).json({ message: "Nenhuma solicitação de troca de email ativa." });
+      }
+
+      if (user.emailChangeExpires < new Date()) {
+        user.pendingEmail = undefined;
+        user.emailChangeCode = undefined;
+        user.emailChangeExpires = undefined;
+        await user.save();
+        return res.status(400).json({ message: "Código expirou. Solicite novamente." });
+      }
+
+      if (user.emailChangeCode !== code) {
+        return res.status(400).json({ message: "Código inválido." });
+      }
+
+      user.email = user.pendingEmail;
+      user.pendingEmail = undefined;
+      user.emailChangeCode = undefined;
+      user.emailChangeExpires = undefined;
+      await user.save();
+
+      return res.status(200).json({ message: "Email atualizado com sucesso.", email: user.email });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Erro ao confirmar troca de email." });
     }
   },
   editpassword: async (req, res) => {

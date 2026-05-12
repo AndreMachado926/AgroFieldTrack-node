@@ -50,4 +50,16 @@ const sendVerificationEmail = async (user, token) => {
   return transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendRecoveryEmail, sendVerificationEmail };
+const sendEmailChangeCode = async (toEmail, code) => {
+  const mailOptions = {
+    from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
+    to: toEmail,
+    subject: 'Código de alteração de email',
+    text: `Seu código para alterar o email é: ${code}`,
+    html: `<p>Seu código para alterar o email é: <strong>${code}</strong></p>`
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendRecoveryEmail, sendVerificationEmail, sendEmailChangeCode };
