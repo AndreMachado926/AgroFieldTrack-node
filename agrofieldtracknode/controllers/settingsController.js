@@ -93,84 +93,6 @@ const settingsController = {
       return res.status(500).json({ message: "Erro ao atualizar username." });
     }
   },
-  requestEmailChange: async (req, res) => {
-    try {
-      const { id, newEmail } = req.body;
-
-      if (!id || !newEmail) {
-        return res.status(400).json({ message: "ID e novo email são obrigatórios." });
-      }
-
-      const user = await User.findById(id);
-      if (!user) {
-        return res.status(404).json({ message: "Usuário não encontrado." });
-      }
-
-      if (user.email === newEmail) {
-        return res.status(400).json({ message: "O novo email precisa ser diferente do atual." });
-      }
-
-      const emailExists = await User.findOne({ email: newEmail });
-      if (emailExists) {
-        return res.status(409).json({ message: "Este email já está em uso." });
-      }
-
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      user.pendingEmail = newEmail;
-      user.emailChangeCode = code;
-      user.emailChangeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
-      await user.save();
-
-      console.log(`📧 Enviando código de email change para: ${user.email}`);
-      await sendEmailChangeCode(user.email, code);
-
-      return res.status(200).json({ message: "Código enviado para seu email atual." });
-    } catch (err) {
-      console.error("❌ Erro ao solicitar troca de email:", err);
-      return res.status(500).json({ message: "Erro ao solicitar troca de email: " + (err.message || "Email service unavailable") });
-    }
-  },
-  confirmEmailChange: async (req, res) => {
-    try {
-      const { id, code } = req.body;
-
-      if (!id || !code) {
-        return res.status(400).json({ message: "ID e código são obrigatórios." });
-      }
-
-      const user = await User.findById(id);
-      if (!user) {
-        return res.status(404).json({ message: "Usuário não encontrado." });
-      }
-
-      if (!user.pendingEmail || !user.emailChangeCode || !user.emailChangeExpires) {
-        return res.status(400).json({ message: "Nenhuma solicitação de troca de email ativa." });
-      }
-
-      if (user.emailChangeExpires < new Date()) {
-        user.pendingEmail = undefined;
-        user.emailChangeCode = undefined;
-        user.emailChangeExpires = undefined;
-        await user.save();
-        return res.status(400).json({ message: "Código expirou. Solicite novamente." });
-      }
-
-      if (user.emailChangeCode !== code) {
-        return res.status(400).json({ message: "Código inválido." });
-      }
-
-      user.email = user.pendingEmail;
-      user.pendingEmail = undefined;
-      user.emailChangeCode = undefined;
-      user.emailChangeExpires = undefined;
-      await user.save();
-
-      return res.status(200).json({ message: "Email atualizado com sucesso.", email: user.email });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Erro ao confirmar troca de email." });
-    }
-  },
   editpassword: async (req, res) => {
     try {
       const { id, oldPassword, newPassword } = req.body;
@@ -225,8 +147,6 @@ const settingsController = {
       res.status(500).json({ error: "Erro ao buscar informações do usuário" });
     }
   },
-
-  // Get user mode
   getusermode: async (req, res) => {
     try {
       const { id } = req.body;
@@ -245,8 +165,6 @@ const settingsController = {
       res.status(500).json({ error: "Erro ao buscar modo do usuário" });
     }
   },
-
-  // Update user mode
   updatemode: async (req, res) => {
     try {
       const { id, mode } = req.body;
@@ -274,5 +192,73 @@ const settingsController = {
       res.status(500).json({ error: "Erro ao atualizar modo do usuário" });
     }
   },
-};  
+  updateemail: async (req, res) => {
+    try {
+      const { id, newEmail } = req.body;
+
+      if (!id || !newEmail) {
+        return res.status(400).json({
+          error: "ID e novo email são obrigatórios",
+        });
+      }
+
+      // procurar utilizador
+      const user = await User.findById(id);
+
+      if (!user) {
+        return res.status(404).json({
+          error: "Utilizador não encontrado",
+        });
+      }
+
+      // atualizar email
+      user.email = newEmail;
+
+      await user.save();
+
+      // enviar email confirmação
+      await transporter.sendMail({
+        from: '"AgroFieldTrack" <agrofieldtrack@gmail.com>',
+        to: newEmail,
+        subject: "Email alterado com sucesso",
+        text: `O seu email foi alterado com sucesso para ${newEmail}`,
+        html: `
+        <div style="font-family: Arial; padding:20px;">
+          <h2>Email alterado com sucesso</h2>
+
+          <p>O seu novo email é:</p>
+
+          <p>
+            <strong>${newEmail}</strong>
+          </p>
+
+          <p>
+            Se não foi você que fez esta alteração,
+            altere imediatamente a sua password.
+          </p>
+        </div>
+      `,
+      });
+
+      return res.status(200).json({
+        message: "Email atualizado com sucesso",
+      });
+
+    } catch (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        error: "Erro ao solicitar mudança de email",
+      });
+    }
+  },
+  confirmEmailChange: async (req, res) => {
+    try {
+      const { id, newEmail, code } = req.body;
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao confirmar mudança de email" });
+    }
+  }
+};
 module.exports = settingsController; 
