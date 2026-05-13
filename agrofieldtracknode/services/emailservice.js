@@ -9,8 +9,8 @@ const transporter = nodemailer.createTransport({
   port: parseInt(process.env.EMAIL_PORT || '587', 10),
   secure: process.env.EMAIL_SECURE === 'true',
   auth: {
-    user: process.env.EMAIL_USER || 'agrofieldtrack@gmail.com',
-    pass: process.env.EMAIL_PASS || 'gbft dwkw kkna hkpf'
+    user:'agrofieldtrack@gmail.com',
+    pass:'cncw zdzb tmcy anij'
   },
   tls: {
     rejectUnauthorized: false
