@@ -14,7 +14,9 @@ const transporter = nodemailer.createTransport({
   },
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  connectionTimeout: 30000, // 30 segundos
+  socketTimeout: 30000      // 30 segundos
 });
 
 // Verificar se o transporter está configurado corretamente apenas na inicialização
@@ -27,6 +29,8 @@ transporter.verify((error, success) => {
 });
 
 const sendRecoveryEmail = async (toEmail) => {
+  console.log("📧 [RECOVERY] Iniciando envio de email de recuperação para:", toEmail);
+  
   const user = await Users.findOne({ email: toEmail });
 
   if (!user) {
@@ -37,7 +41,6 @@ const sendRecoveryEmail = async (toEmail) => {
 
   const recoveryLink = `${process.env.BASE_URL}/change-password?token=${token}`;
 
-
   const mailOptions = {
     from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
     to: toEmail,
@@ -46,12 +49,23 @@ const sendRecoveryEmail = async (toEmail) => {
     html: `<p>Clique no <a href="${recoveryLink}">link</a> para redefinir sua palavra-passe.</p>`
   };
 
-  return transporter.sendMail(mailOptions);
+  try {
+    const result = await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Email timeout after 30 seconds')), 30000)
+      )
+    ]);
+    console.log("✅ [RECOVERY] Email enviado com sucesso para:", toEmail);
+    return result;
+  } catch (error) {
+    console.error("❌ [RECOVERY] Erro ao enviar email para:", toEmail, error.message);
+    throw error;
+  }
 };
 const sendVerificationEmail = async (user, token) => {
-  console.log("Enviando email para verificação:", user.email);
+  console.log("📧 [VERIFICATION] Iniciando envio de email de verificação para:", user.email);
   const verificationLink = `${process.env.BASE_URL}/verification?token=${token}`;
-  console.log("Enviando verificação para:", user.email, "com link:", verificationLink);
 
   const mailOptions = {
     from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
@@ -61,11 +75,23 @@ const sendVerificationEmail = async (user, token) => {
     html: `<p>Clique no <a href="${verificationLink}">link</a> para verificar sua conta.</p>`
   };
 
-  return transporter.sendMail(mailOptions);
+  try {
+    const result = await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Email timeout after 30 seconds')), 30000)
+      )
+    ]);
+    console.log("✅ [VERIFICATION] Email enviado com sucesso para:", user.email);
+    return result;
+  } catch (error) {
+    console.error("❌ [VERIFICATION] Erro ao enviar email para:", user.email, error.message);
+    throw error;
+  }
 };
 
 const sendEmailChangeCode = async (toEmail, code) => {
-  console.log("📧 Tentando enviar código de email para:", toEmail);
+  console.log("📧 [EMAIL_CHANGE] Iniciando envio de código para:", toEmail);
 
   const mailOptions = {
     from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
@@ -76,17 +102,18 @@ const sendEmailChangeCode = async (toEmail, code) => {
   };
 
   try {
+    const startTime = Date.now();
     const result = await Promise.race([
       transporter.sendMail(mailOptions),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Email timeout after 10 seconds')), 10000)
+        setTimeout(() => reject(new Error('Email timeout after 30 seconds')), 30000)
       )
     ]);
-
-    console.log("✅ Email enviado com sucesso para:", toEmail, result.response);
+    const duration = Date.now() - startTime;
+    console.log(`✅ [EMAIL_CHANGE] Email enviado com sucesso para: ${toEmail} (${duration}ms)`);
     return result;
   } catch (error) {
-    console.error("❌ Erro ao enviar email para:", toEmail, error.message || error);
+    console.error("❌ [EMAIL_CHANGE] Erro ao enviar email para:", toEmail, error.message || error);
     throw error;
   }
 };
