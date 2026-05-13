@@ -7,7 +7,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'agrofieldtrack@gmail.com',
-    pass: 'sfrb qyuz mrkw qmls'
+    pass: 'gbft dwkw kkna hkpf'
   }
 });
 
