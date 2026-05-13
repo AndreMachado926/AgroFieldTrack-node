@@ -8,7 +8,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'agrofieldtrack@gmail.com',
-    pass: 'sfrb qyuz mrkw qmls'
+    pass: 'gbft dwkw kkna hkpf'
   }
 });
 
@@ -59,4 +59,41 @@ const sendVerificationEmail = async (user, token) => {
   return transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendRecoveryEmail, sendVerificationEmail };
+const sendEmailChangeCode = async (toEmail, code) => {
+  console.log("📧 Tentando enviar código de email para:", toEmail);
+
+  const mailOptions = {
+    from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
+    to: toEmail,
+    subject: 'Código de alteração de email',
+    text: `Seu código para alterar o email é: ${code}`,
+    html: `<p>Seu código para alterar o email é: <strong>${code}</strong></p>`
+  };
+
+  try {
+    await new Promise((resolve, reject) => {
+      transporter.verify((error, success) => {
+        if (error) {
+          reject(new Error(`Transporter verification failed: ${error.message}`));
+        } else {
+          resolve(success);
+        }
+      });
+    });
+
+    const result = await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Email timeout after 10 seconds')), 10000)
+      )
+    ]);
+
+    console.log("✅ Email enviado com sucesso para:", toEmail, result.response);
+    return result;
+  } catch (error) {
+    console.error("❌ Erro ao enviar email para:", toEmail, error.message);
+    throw error;
+  }
+};
+
+module.exports = { sendRecoveryEmail, sendVerificationEmail, sendEmailChangeCode };
