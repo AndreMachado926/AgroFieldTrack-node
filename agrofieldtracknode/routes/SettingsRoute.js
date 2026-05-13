@@ -14,4 +14,6 @@ router.post('/settings/editpassword', SettingsController.editpassword);
 router.post('/settings/getuserinfo', SettingsController.getuserinfo);
 router.post('/settings/getusermode', SettingsController.getusermode);
 router.post('/settings/updatemode', SettingsController.updatemode);
+
+router.post('/settings/updateemail', SettingsController.updateemail);
 module.exports = router;

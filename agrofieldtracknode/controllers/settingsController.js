@@ -1,6 +1,6 @@
 const User = require('../models/UserModel');
 const bcrypt = require('bcrypt');
-const { sendEmailChangeCode } = require('../services/emailservice');
+const { sendEmailChangeConfirmation } = require('../services/emailservice');
 
 const settingsController = {
 
@@ -211,37 +211,27 @@ const settingsController = {
         });
       }
 
-      // atualizar email
-      user.email = newEmail;
+      if (user.email === newEmail) {
+        return res.status(400).json({
+          error: "O novo email precisa ser diferente do email atual",
+        });
+      }
 
+      const emailExists = await User.findOne({ email: newEmail });
+      if (emailExists && emailExists._id.toString() !== id) {
+        return res.status(409).json({
+          error: "Este email já está em uso",
+        });
+      }
+
+      const oldEmail = user.email;
+      user.email = newEmail;
       await user.save();
 
-      // enviar email confirmação
-      await transporter.sendMail({
-        from: '"AgroFieldTrack" <agrofieldtrack@gmail.com>',
-        to: newEmail,
-        subject: "Email alterado com sucesso",
-        text: `O seu email foi alterado com sucesso para ${newEmail}`,
-        html: `
-        <div style="font-family: Arial; padding:20px;">
-          <h2>Email alterado com sucesso</h2>
-
-          <p>O seu novo email é:</p>
-
-          <p>
-            <strong>${newEmail}</strong>
-          </p>
-
-          <p>
-            Se não foi você que fez esta alteração,
-            altere imediatamente a sua password.
-          </p>
-        </div>
-      `,
-      });
+      await sendEmailChangeConfirmation(newEmail, oldEmail);
 
       return res.status(200).json({
-        message: "Email atualizado com sucesso",
+        message: "Email atualizado com sucesso. Conferência enviada ao novo email.",
       });
 
     } catch (err) {
