@@ -168,4 +168,52 @@ const sendEmailChangeCode = async (toEmail, code) => {
   throw lastError || new Error('Falha ao enviar email após múltiplas tentativas');
 };
 
-module.exports = { sendRecoveryEmail, sendVerificationEmail, sendEmailChangeCode };
+const sendEmailChangeConfirmation = async (newEmail, oldEmail) => {
+  console.log("📧 [EMAIL_CHANGE_CONF] Enviando confirmação de troca de email para:", newEmail, "(antigo:", oldEmail, ")");
+
+  const mailOptions = {
+    from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
+    to: newEmail,
+    subject: 'Confirmação de troca de email',
+    text: `Seu email foi alterado com sucesso de ${oldEmail} para ${newEmail}. Se você não fez essa alteração, por favor altere sua senha imediatamente.`,
+    html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+      <h2>Confirmação de troca de email</h2>
+      <p>Seu email foi alterado com sucesso de <strong>${oldEmail}</strong> para <strong>${newEmail}</strong>.</p>
+      <p>Se você não fez essa alteração, por favor altere sua senha imediatamente.</p>
+    </div>`
+  };
+
+  let lastError = null;
+  const maxRetries = 2;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const startTime = Date.now();
+      console.log(`📧 [EMAIL_CHANGE_CONF] Tentativa ${attempt}/${maxRetries}...`);
+      
+      const result = await Promise.race([
+        transporter.sendMail(mailOptions),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Email timeout after 60 seconds')), 60000)
+        )
+      ]);
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ [EMAIL_CHANGE_CONF] Confirmação enviada para: ${newEmail} (${duration}ms) na tentativa ${attempt}`);
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ [EMAIL_CHANGE_CONF] Tentativa ${attempt} falhou para ${newEmail}:`, error.message);
+      
+      if (attempt < maxRetries) {
+        console.log(`⏳ [EMAIL_CHANGE_CONF] Aguardando 2 segundos antes de tentar novamente...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  }
+
+  console.error("❌ [EMAIL_CHANGE_CONF] Todas as tentativas falharam para:", newEmail);
+  throw lastError || new Error('Falha ao enviar email de confirmação de troca');
+};
+
+module.exports = { sendRecoveryEmail, sendVerificationEmail, sendEmailChangeCode, sendEmailChangeConfirmation };
