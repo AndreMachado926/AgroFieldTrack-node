@@ -71,13 +71,44 @@ const sendEmailChangeCode = async (toEmail, code) => {
   };
 
   try {
-    const result = await transporter.sendMail(mailOptions);
+    // Verificar se o transporter está pronto antes de enviar
+    await new Promise((resolve, reject) => {
+      transporter.verify((error, success) => {
+        if (error) {
+          reject(new Error(`Transporter verification failed: ${error.message}`));
+        } else {
+          resolve(success);
+        }
+      });
+    });
+
+    // Adicionar timeout de 10 segundos para evitar pending infinito
+    const result = await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email timeout after 10 seconds')), 10000)
+      )
+    ]);
+    
     console.log("✅ Email enviado com sucesso para:", toEmail, result.response);
     return result;
   } catch (error) {
-    console.error("❌ Erro ao enviar email para:", toEmail, error);
+    console.error("❌ Erro ao enviar email para:", toEmail, error.message);
     throw error;
   }
 };
 
-module.exports = { sendRecoveryEmail, sendVerificationEmail, sendEmailChangeCode };
+// Função de teste para verificar se o email está funcionando
+const testEmailService = async (testEmail) => {
+  try {
+    console.log("🧪 Testando serviço de email...");
+    await sendEmailChangeCode(testEmail, '123456');
+    console.log("✅ Teste de email bem-sucedido!");
+    return { success: true, message: 'Email enviado com sucesso' };
+  } catch (error) {
+    console.error("❌ Teste de email falhou:", error.message);
+    return { success: false, message: error.message };
+  }
+};
+
+module.exports = { sendRecoveryEmail, sendVerificationEmail, sendEmailChangeCode, testEmailService };
