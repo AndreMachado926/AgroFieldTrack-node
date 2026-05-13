@@ -5,14 +5,19 @@ const jwtkey = 'jkdoamnwpa';
 require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.EMAIL_PORT || '587', 10),
+  secure: process.env.EMAIL_SECURE === 'true',
   auth: {
-    user: 'agrofieldtrack@gmail.com',
-    pass: 'gbft dwkw kkna hkpf'
+    user: process.env.EMAIL_USER || 'agrofieldtrack@gmail.com',
+    pass: process.env.EMAIL_PASS || 'gbft dwkw kkna hkpf'
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
-// Verificar se o transporter está configurado corretamente
+// Verificar se o transporter está configurado corretamente apenas na inicialização
 transporter.verify((error, success) => {
   if (error) {
     console.error("❌ Erro de configuração do email:", error);
@@ -71,16 +76,6 @@ const sendEmailChangeCode = async (toEmail, code) => {
   };
 
   try {
-    await new Promise((resolve, reject) => {
-      transporter.verify((error, success) => {
-        if (error) {
-          reject(new Error(`Transporter verification failed: ${error.message}`));
-        } else {
-          resolve(success);
-        }
-      });
-    });
-
     const result = await Promise.race([
       transporter.sendMail(mailOptions),
       new Promise((_, reject) =>
@@ -91,7 +86,7 @@ const sendEmailChangeCode = async (toEmail, code) => {
     console.log("✅ Email enviado com sucesso para:", toEmail, result.response);
     return result;
   } catch (error) {
-    console.error("❌ Erro ao enviar email para:", toEmail, error.message);
+    console.error("❌ Erro ao enviar email para:", toEmail, error.message || error);
     throw error;
   }
 };
