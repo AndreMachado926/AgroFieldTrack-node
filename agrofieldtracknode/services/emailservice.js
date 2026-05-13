@@ -12,6 +12,15 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Verificar se o transporter está configurado corretamente
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Erro de configuração do email:", error);
+  } else {
+    console.log("✅ Serviço de email configurado com sucesso");
+  }
+});
+
 const sendRecoveryEmail = async (toEmail) => {
   const user = await Users.findOne({ email: toEmail });
 
@@ -51,6 +60,8 @@ const sendVerificationEmail = async (user, token) => {
 };
 
 const sendEmailChangeCode = async (toEmail, code) => {
+  console.log("📧 Tentando enviar código de email para:", toEmail);
+  
   const mailOptions = {
     from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
     to: toEmail,
@@ -59,7 +70,14 @@ const sendEmailChangeCode = async (toEmail, code) => {
     html: `<p>Seu código para alterar o email é: <strong>${code}</strong></p>`
   };
 
-  return transporter.sendMail(mailOptions);
+  try {
+    const result = await transporter.sendMail(mailOptions);
+    console.log("✅ Email enviado com sucesso para:", toEmail, result.response);
+    return result;
+  } catch (error) {
+    console.error("❌ Erro ao enviar email para:", toEmail, error);
+    throw error;
+  }
 };
 
 module.exports = { sendRecoveryEmail, sendVerificationEmail, sendEmailChangeCode };
