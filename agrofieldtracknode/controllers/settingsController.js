@@ -121,12 +121,13 @@ const settingsController = {
       user.emailChangeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 min
       await user.save();
 
+      console.log(`📧 Enviando código de email change para: ${user.email}`);
       await sendEmailChangeCode(user.email, code);
 
       return res.status(200).json({ message: "Código enviado para seu email atual." });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Erro ao solicitar troca de email." });
+      console.error("❌ Erro ao solicitar troca de email:", err);
+      return res.status(500).json({ message: "Erro ao solicitar troca de email: " + (err.message || "Email service unavailable") });
     }
   },
   confirmEmailChange: async (req, res) => {
