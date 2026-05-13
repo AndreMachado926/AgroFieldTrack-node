@@ -1,64 +1,6 @@
 const User = require('../models/UserModel');
 const bcrypt = require('bcrypt');
-const nodemailer = require('nodemailer');
-
-// Configuração do email diretamente no controller
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: 'agrofieldtrack@gmail.com',
-    pass: 'gbft dwkw kkna hkpf'
-  }
-});
-
-// Verificar se o transporter está configurado corretamente
-transporter.verify((error, success) => {
-  if (error) {
-    console.error("❌ Erro de configuração do email:", error);
-  } else {
-    console.log("✅ Serviço de email configurado com sucesso");
-  }
-});
-
-// Função para enviar código de mudança de email
-const sendEmailChangeCode = async (toEmail, code) => {
-  console.log("📧 Tentando enviar código de email para:", toEmail);
-
-  const mailOptions = {
-    from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
-    to: toEmail,
-    subject: 'Código de alteração de email',
-    text: `Seu código para alterar o email é: ${code}`,
-    html: `<p>Seu código para alterar o email é: <strong>${code}</strong></p>`
-  };
-
-  try {
-    // Verificar se o transporter está pronto antes de enviar
-    await new Promise((resolve, reject) => {
-      transporter.verify((error, success) => {
-        if (error) {
-          reject(new Error(`Transporter verification failed: ${error.message}`));
-        } else {
-          resolve(success);
-        }
-      });
-    });
-
-    // Adicionar timeout de 10 segundos para evitar pending infinito
-    const result = await Promise.race([
-      transporter.sendMail(mailOptions),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Email timeout after 10 seconds')), 10000)
-      )
-    ]);
-
-    console.log("✅ Email enviado com sucesso para:", toEmail, result.response);
-    return result;
-  } catch (error) {
-    console.error("❌ Erro ao enviar email para:", toEmail, error.message);
-    throw error;
-  }
-};
+const { sendEmailChangeCode } = require('../services/emailservice');
 
 const settingsController = {
 
