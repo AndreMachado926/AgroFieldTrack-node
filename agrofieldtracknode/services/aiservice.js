@@ -1,9 +1,14 @@
 const axios = require('axios');
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// Read OpenAI API key from environment. On Render set the env var `OPENAI_API_KEY`.
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || null;
 const OPENAI_API = 'https://api.openai.com/v1';
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 const MAX_PROMPT_COST_EUR = 5;
+
+if (!OPENAI_API_KEY) {
+  console.warn('[AI Service] WARNING: OPENAI_API_KEY is not set. Set the environment variable on your host (e.g., Render) as `OPENAI_API_KEY`.');
+}
 
 const getModelPricePerThousandTokens = (model) => {
   if (model.includes('gpt-4')) {
@@ -91,7 +96,7 @@ const sendMessageToLLM = async (message, conversationHistory = []) => {
   }
 };
 
-const isOllamaAvailable = async () => {
+const isOpenAIAvailable = async () => {
   if (!OPENAI_API_KEY) return false;
 
   try {
@@ -127,8 +132,12 @@ const getAvailableModels = async () => {
 
 module.exports = {
   sendMessageToLLM,
-  isOllamaAvailable,
+  isOpenAIAvailable,
   getAvailableModels,
   OPENAI_API,
   OPENAI_MODEL
 };
+
+// Backwards compatibility alias
+module.exports.isOllamaAvailable = module.exports.isOpenAIAvailable;
+
