@@ -1,12 +1,13 @@
 const User = require('../models/UserModel');
 const bcrypt = require('bcrypt');
+const { sendEmailChangeConfirmation } = require('../services/emailservice');
 
 const settingsController = {
 
   // Update profile picture
   updateProfilePic: async (req, res) => {
     try {
-      const { id: userId } = req.body; // pega o id direto do body
+      const { id: userId, profilePic } = req.body; // pega o id e o base64 direto do body
 
       if (!userId) {
         return res.status(400).json({ error: 'User ID is required' });
@@ -17,16 +18,16 @@ const settingsController = {
         return res.status(404).json({ error: 'User not found' });
       }
 
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+      if (!profilePic) {
+        return res.status(400).json({ error: 'profilePic is required' });
       }
 
-      user.profilePic = req.file.location || req.file.path; // depende de como o multer está configurado
+      user.profilePic = profilePic;
       await user.save();
 
-      console.log("User atualizado: ", user);
+      console.log('User atualizado: ', user);
 
-      res.json({ profilePic: user.profilePic }); // retorna só o caminho da imagem
+      res.json({ profilePic: user.profilePic });
     } catch (error) {
       console.error('Error updating profile picture:', error);
       res.status(500).json({ error: 'Error updating profile picture' });
@@ -146,8 +147,6 @@ const settingsController = {
       res.status(500).json({ error: "Erro ao buscar informações do usuário" });
     }
   },
-
-  // Get user mode
   getusermode: async (req, res) => {
     try {
       const { id } = req.body;
@@ -166,8 +165,6 @@ const settingsController = {
       res.status(500).json({ error: "Erro ao buscar modo do usuário" });
     }
   },
-
-  // Update user mode
   updatemode: async (req, res) => {
     try {
       const { id, mode } = req.body;
@@ -195,5 +192,63 @@ const settingsController = {
       res.status(500).json({ error: "Erro ao atualizar modo do usuário" });
     }
   },
-};  
+  updateemail: async (req, res) => {
+    try {
+      const { id, newEmail } = req.body;
+
+      if (!id || !newEmail) {
+        return res.status(400).json({
+          error: "ID e novo email são obrigatórios",
+        });
+      }
+
+      // procurar utilizador
+      const user = await User.findById(id);
+
+      if (!user) {
+        return res.status(404).json({
+          error: "Utilizador não encontrado",
+        });
+      }
+
+      if (user.email === newEmail) {
+        return res.status(400).json({
+          error: "O novo email precisa ser diferente do email atual",
+        });
+      }
+
+      const emailExists = await User.findOne({ email: newEmail });
+      if (emailExists && emailExists._id.toString() !== id) {
+        return res.status(409).json({
+          error: "Este email já está em uso",
+        });
+      }
+
+      const oldEmail = user.email;
+      user.email = newEmail;
+      await user.save();
+
+      await sendEmailChangeConfirmation(newEmail, oldEmail);
+
+      return res.status(200).json({
+        message: "Email atualizado com sucesso. Conferência enviada ao novo email.",
+      });
+
+    } catch (err) {
+      console.error(err);
+
+      return res.status(500).json({
+        error: "Erro ao solicitar mudança de email",
+      });
+    }
+  },
+  confirmEmailChange: async (req, res) => {
+    try {
+      const { id, newEmail, code } = req.body;
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Erro ao confirmar mudança de email" });
+    }
+  }
+};
 module.exports = settingsController; 

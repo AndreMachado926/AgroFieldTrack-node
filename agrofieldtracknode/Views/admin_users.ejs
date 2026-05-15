@@ -260,6 +260,8 @@
                 <input type="text" name="telefone" placeholder="Telefone">
                 <input type="text" name="descricao" placeholder="Descrição">
                 <input type="text" name="especializacao" placeholder="Especialização">
+                <label style="display:block; margin-top:10px; color:#fff;">Foto de Perfil</label>
+                <input type="file" name="profilePic" accept="image/*">
                 <button type="submit" class="add-btn">Adicionar</button>
             </form>
         </div>
@@ -322,16 +324,52 @@
         }
 
         // Submit Add/Edit
-        form.addEventListener("submit", function (e) {
+        async function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    if (typeof reader.result === 'string') {
+                        resolve(reader.result);
+                    } else {
+                        reject(new Error('Erro ao converter arquivo para base64'));
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        form.addEventListener("submit", async function (e) {
             e.preventDefault();
-            const data = Object.fromEntries(new FormData(form).entries());
+            const formData = new FormData(form);
+            const data = {};
+
+            for (const [key, value] of formData.entries()) {
+                if (value instanceof File) {
+                    if (value.name) {
+                        data[key] = value;
+                    }
+                } else {
+                    data[key] = value;
+                }
+            }
+
+            if (data.profilePic instanceof File) {
+                try {
+                    data.profilePic = await fileToBase64(data.profilePic);
+                } catch (err) {
+                    alert('Erro ao processar imagem de perfil.');
+                    return;
+                }
+            } else {
+                delete data.profilePic;
+            }
 
             let url = "/admin/users/add";
             if (data.id) { // modo edição
-                url = "/admin/users/edit"; // sem :id
+                url = "/admin/users/edit";
                 if (!data.password) delete data.password; // remove password se vazio
             }
-
 
             fetch(url, {
                 method: "POST",

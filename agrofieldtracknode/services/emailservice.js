@@ -5,14 +5,42 @@ const jwtkey = 'jkdoamnwpa';
 require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.EMAIL_PORT || '587', 10),
+  secure: process.env.EMAIL_SECURE === 'true',
   auth: {
-    user: 'agrofieldtrack@gmail.com',
-    pass: 'sfrb qyuz mrkw qmls'
+    user:'agrofieldtrack@gmail.com',
+    pass:'cncw zdzb tmcy anij'
+  },
+  tls: {
+    rejectUnauthorized: false,
+    minVersion: 'TLSv1.2'
+  },
+  connectionTimeout: 60000, // 60 segundos
+  socketTimeout: 60000,     // 60 segundos
+  greetingTimeout: 60000,   // Timeout do greeting
+  pool: {
+    maxConnections: 5,
+    maxMessages: 100,
+    rateDelta: 500,
+    rateLimit: 14
+  },
+  logger: false,
+  debug: false
+});
+
+// Verificar se o transporter está configurado corretamente apenas na inicialização
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("❌ Erro de configuração do email:", error);
+  } else {
+    console.log("✅ Serviço de email configurado com sucesso");
   }
 });
 
 const sendRecoveryEmail = async (toEmail) => {
+  console.log("📧 [RECOVERY] Iniciando envio de email de recuperação para:", toEmail);
+  
   const user = await Users.findOne({ email: toEmail });
 
   if (!user) {
@@ -23,7 +51,6 @@ const sendRecoveryEmail = async (toEmail) => {
 
   const recoveryLink = `${process.env.BASE_URL}/change-password?token=${token}`;
 
-
   const mailOptions = {
     from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
     to: toEmail,
@@ -32,12 +59,35 @@ const sendRecoveryEmail = async (toEmail) => {
     html: `<p>Clique no <a href="${recoveryLink}">link</a> para redefinir sua palavra-passe.</p>`
   };
 
-  return transporter.sendMail(mailOptions);
+  let lastError = null;
+  const maxRetries = 2;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`📧 [RECOVERY] Tentativa ${attempt}/${maxRetries}...`);
+      const result = await Promise.race([
+        transporter.sendMail(mailOptions),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Email timeout after 60 seconds')), 60000)
+        )
+      ]);
+      console.log("✅ [RECOVERY] Email enviado com sucesso para:", toEmail, `na tentativa ${attempt}`);
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ [RECOVERY] Tentativa ${attempt} falhou para ${toEmail}:`, error.message);
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  }
+
+  throw lastError || new Error('Falha ao enviar email de recuperação');
 };
 const sendVerificationEmail = async (user, token) => {
-  console.log("Enviando email para verificação:", user.email);
+  console.log("📧 [VERIFICATION] Iniciando envio de email de verificação para:", user.email);
   const verificationLink = `${process.env.BASE_URL}/verification?token=${token}`;
-  console.log("Enviando verificação para:", user.email, "com link:", verificationLink);
 
   const mailOptions = {
     from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
@@ -47,7 +97,123 @@ const sendVerificationEmail = async (user, token) => {
     html: `<p>Clique no <a href="${verificationLink}">link</a> para verificar sua conta.</p>`
   };
 
-  return transporter.sendMail(mailOptions);
+  let lastError = null;
+  const maxRetries = 2;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`📧 [VERIFICATION] Tentativa ${attempt}/${maxRetries}...`);
+      const result = await Promise.race([
+        transporter.sendMail(mailOptions),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Email timeout after 60 seconds')), 60000)
+        )
+      ]);
+      console.log("✅ [VERIFICATION] Email enviado com sucesso para:", user.email, `na tentativa ${attempt}`);
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ [VERIFICATION] Tentativa ${attempt} falhou para ${user.email}:`, error.message);
+      
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  }
+
+  throw lastError || new Error('Falha ao enviar email de verificação');
 };
 
-module.exports = { sendRecoveryEmail, sendVerificationEmail };
+const sendEmailChangeCode = async (toEmail, code) => {
+  console.log("📧 [EMAIL_CHANGE] Iniciando envio de código para:", toEmail);
+
+  const mailOptions = {
+    from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
+    to: toEmail,
+    subject: 'Código de alteração de email',
+    text: `Seu código para alterar o email é: ${code}`,
+    html: `<p>Seu código para alterar o email é: <strong>${code}</strong></p>`
+  };
+
+  let lastError = null;
+  const maxRetries = 2;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const startTime = Date.now();
+      console.log(`📧 [EMAIL_CHANGE] Tentativa ${attempt}/${maxRetries}...`);
+      
+      const result = await Promise.race([
+        transporter.sendMail(mailOptions),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Email timeout after 60 seconds')), 60000)
+        )
+      ]);
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ [EMAIL_CHANGE] Email enviado com sucesso para: ${toEmail} (${duration}ms) na tentativa ${attempt}`);
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ [EMAIL_CHANGE] Tentativa ${attempt} falhou para ${toEmail}:`, error.message);
+      
+      if (attempt < maxRetries) {
+        console.log(`⏳ [EMAIL_CHANGE] Aguardando 2 segundos antes de tentar novamente...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  }
+
+  console.error("❌ [EMAIL_CHANGE] Todas as tentativas falharam para:", toEmail);
+  throw lastError || new Error('Falha ao enviar email após múltiplas tentativas');
+};
+
+const sendEmailChangeConfirmation = async (newEmail, oldEmail) => {
+  console.log("📧 [EMAIL_CHANGE_CONF] Enviando confirmação de troca de email para:", newEmail, "(antigo:", oldEmail, ")");
+
+  const mailOptions = {
+    from: '"agrofieldtrack" <agrofieldtrack@gmail.com>',
+    to: newEmail,
+    subject: 'Confirmação de troca de email',
+    text: `Seu email foi alterado com sucesso de ${oldEmail} para ${newEmail}. Se você não fez essa alteração, por favor altere sua senha imediatamente.`,
+    html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+      <h2>Confirmação de troca de email</h2>
+      <p>Seu email foi alterado com sucesso de <strong>${oldEmail}</strong> para <strong>${newEmail}</strong>.</p>
+      <p>Se você não fez essa alteração, por favor altere sua senha imediatamente.</p>
+    </div>`
+  };
+
+  let lastError = null;
+  const maxRetries = 2;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const startTime = Date.now();
+      console.log(`📧 [EMAIL_CHANGE_CONF] Tentativa ${attempt}/${maxRetries}...`);
+      
+      const result = await Promise.race([
+        transporter.sendMail(mailOptions),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Email timeout after 60 seconds')), 60000)
+        )
+      ]);
+      
+      const duration = Date.now() - startTime;
+      console.log(`✅ [EMAIL_CHANGE_CONF] Confirmação enviada para: ${newEmail} (${duration}ms) na tentativa ${attempt}`);
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ [EMAIL_CHANGE_CONF] Tentativa ${attempt} falhou para ${newEmail}:`, error.message);
+      
+      if (attempt < maxRetries) {
+        console.log(`⏳ [EMAIL_CHANGE_CONF] Aguardando 2 segundos antes de tentar novamente...`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
+  }
+
+  console.error("❌ [EMAIL_CHANGE_CONF] Todas as tentativas falharam para:", newEmail);
+  throw lastError || new Error('Falha ao enviar email de confirmação de troca');
+};
+
+module.exports = { sendRecoveryEmail, sendVerificationEmail, sendEmailChangeCode, sendEmailChangeConfirmation };

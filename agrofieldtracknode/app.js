@@ -53,10 +53,10 @@ app.use(cors({
 
 
 
-
+require("dotenv").config();
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, "public")));
 
 // fallback: aceitar pedidos com Content-Type: text/plain que contenham JSON
@@ -105,6 +105,7 @@ const MarketRoutes = require('./routes/MarketRoute');
 const SettingsRoutes = require('./routes/SettingsRoute');
 const ChatsRoutes = require('./routes/ChatsRoute');
 const AiRoute = require('./routes/AiRoute');
+const PromptRoutes = require('./routes/PromptRoute');
 const ArduinosRoute = require('./routes/ArduinosRoute')(io);
 const AnimalRoute = require('./routes/AnimaisRoute');
 
@@ -131,6 +132,7 @@ safeUse('veterinariosRouter', veterinariosRouter);
 safeUse('SettingsRoutes', SettingsRoutes);
 safeUse('ChatsRoutes', ChatsRoutes);
 safeUse('AiRoute', AiRoute);
+safeUse('PromptRoutes', PromptRoutes);
 safeUse('ArduinosRoute', ArduinosRoute);
 safeUse('AnimalRoute', AnimalRoute);
 
