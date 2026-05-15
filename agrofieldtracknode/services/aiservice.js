@@ -5,8 +5,9 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || n
 const OPENAI_API = 'https://api.openai.com/v1';
 const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
 const MAX_PROMPT_COST_EUR = 5;
+const OPENAI_API_KEY_CONFIGURED = Boolean(OPENAI_API_KEY);
 
-if (!OPENAI_API_KEY) {
+if (!OPENAI_API_KEY_CONFIGURED) {
   console.warn('[AI Service] WARNING: OPENAI_API_KEY is not set. Set the environment variable on your host (e.g., Render) as `OPENAI_API_KEY`.');
 }
 
@@ -25,8 +26,8 @@ const estimateTokens = (text) => {
 
 const sendMessageToLLM = async (message, conversationHistory = []) => {
   try {
-    if (!OPENAI_API_KEY) {
-      throw new Error('Chave OpenAI não configurada');
+    if (!OPENAI_API_KEY_CONFIGURED) {
+      throw new Error('Chave OpenAI não configurada. Defina OPENAI_API_KEY no ambiente.');
     }
 
     const messages = [];
@@ -135,7 +136,8 @@ module.exports = {
   isOpenAIAvailable,
   getAvailableModels,
   OPENAI_API,
-  OPENAI_MODEL
+  OPENAI_MODEL,
+  OPENAI_API_KEY_CONFIGURED
 };
 
 // Backwards compatibility alias
