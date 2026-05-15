@@ -22,11 +22,24 @@ const resolveUserPayload = (req) => {
 const createPrompt = async (req, res) => {
   try {
     const { user_id, user_type, texto, imagem } = req.body;
+    
+    // Debug: log incoming request
+    console.log('[PromptController] createPrompt called', {
+      bodyKeys: Object.keys(req.body),
+      cookieKeys: Object.keys(req.cookies || {}),
+      authHeader: req.headers.authorization ? 'present' : 'absent'
+    });
+
     const decoded = resolveUserPayload(req);
+    console.log('[PromptController] JWT decoded:', { decoded });
+
     const promptOwnerId = decoded?.user_id || user_id;
-    const promptUserType = decoded?.type || user_type;
+    const promptUserType = decoded?.type || user_type || 'user';
+
+    console.log('[PromptController] Resolved user:', { promptOwnerId, promptUserType, decoded });
 
     if (!promptOwnerId) {
+      console.error('[PromptController] No user ID found in JWT or request body');
       return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
     }
 
@@ -49,6 +62,7 @@ const createPrompt = async (req, res) => {
     }
 
     const prompt = await Prompt.create(promptData);
+    console.log('[PromptController] Prompt created:', { id: prompt._id, user_id: prompt.user_id });
 
     return res.status(201).json({ success: true, data: prompt });
   } catch (err) {
