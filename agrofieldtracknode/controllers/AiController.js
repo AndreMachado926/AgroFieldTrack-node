@@ -1,5 +1,4 @@
-const { sendMessageToLLM, isOpenAIAvailable, getAvailableModels, OPENAI_MODEL } = require('../services/aiservice');
-const { jwtDecode } = require('jwt-decode');
+const { sendMessageToLLM, isOpenAIAvailable, getAvailableModels, OPENAI_MODEL, OPENAI_API_KEY_CONFIGURED } = require('../services/aiservice');
 
 /**
  * POST /ai/chat
@@ -23,7 +22,8 @@ const sendMessage = async (req, res) => {
       return res.status(503).json({
         success: false,
         error: 'Serviço de IA indisponível. OpenAI não respondeu.',
-        details: 'Verifique a variável de ambiente OPENAI_API_KEY e a conectividade com a API da OpenAI.'
+        details: 'Verifique a variável de ambiente OPENAI_API_KEY e a conectividade com a API da OpenAI.',
+        openaiKeyConfigured: OPENAI_API_KEY_CONFIGURED
       });
     }
 
@@ -61,6 +61,7 @@ const getStatus = async (req, res) => {
       status: {
         openaiAvailable: available,
         serviceRunning: available,
+        openaiKeyConfigured: OPENAI_API_KEY_CONFIGURED,
         models: models.map(m => ({
           name: m.id || m.name || m.model || null,
           size: m.size || null,
