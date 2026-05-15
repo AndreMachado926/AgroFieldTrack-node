@@ -1,4 +1,4 @@
-const { sendMessageToLLM, isOllamaAvailable, getAvailableModels } = require('../services/aiservice');
+const { sendMessageToLLM, isOpenAIAvailable, getAvailableModels, OPENAI_MODEL } = require('../services/aiservice');
 const { jwtDecode } = require('jwt-decode');
 
 /**
@@ -17,13 +17,13 @@ const sendMessage = async (req, res) => {
       });
     }
 
-    // Verificar se Ollama está disponível
-    const available = await isOllamaAvailable();
+    // Verificar se OpenAI está disponível
+    const available = await isOpenAIAvailable();
     if (!available) {
       return res.status(503).json({
         success: false,
-        error: 'Serviço de IA indisponível. Ollama não está em execução.',
-        details: 'Certifique-se de que o Ollama está iniciado localmente com "ollama serve"'
+        error: 'Serviço de IA indisponível. OpenAI não respondeu.',
+        details: 'Verifique a variável de ambiente OPENAI_API_KEY e a conectividade com a API da OpenAI.'
       });
     }
 
@@ -53,20 +53,20 @@ const sendMessage = async (req, res) => {
  */
 const getStatus = async (req, res) => {
   try {
-    const available = await isOllamaAvailable();
+    const available = await isOpenAIAvailable();
     const models = available ? await getAvailableModels() : [];
 
     return res.json({
       success: true,
       status: {
-        ollamaAvailable: available,
+        openaiAvailable: available,
         serviceRunning: available,
         models: models.map(m => ({
-          name: m.name,
-          size: m.size,
-          modifiedAt: m.modified_at
+          name: m.id || m.name || m.model || null,
+          size: m.size || null,
+          modifiedAt: m.modified_at || m.created || null
         })),
-        defaultModel: 'llava'
+        defaultModel: OPENAI_MODEL || 'gpt-3.5-turbo'
       }
     });
 
@@ -85,12 +85,12 @@ const getStatus = async (req, res) => {
  */
 const getModels = async (req, res) => {
   try {
-    const available = await isOllamaAvailable();
-    
+    const available = await isOpenAIAvailable();
+
     if (!available) {
       return res.status(503).json({
         success: false,
-        error: 'Ollama não está disponível',
+        error: 'OpenAI não está disponível',
         models: []
       });
     }
@@ -100,9 +100,9 @@ const getModels = async (req, res) => {
     return res.json({
       success: true,
       models: models.map(m => ({
-        name: m.name,
-        size: m.size,
-        modifiedAt: m.modified_at
+        name: m.id || m.name || m.model || null,
+        size: m.size || null,
+        modifiedAt: m.modified_at || m.created || null
       }))
     });
 
