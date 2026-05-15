@@ -1,101 +1,124 @@
 const axios = require('axios');
 
-// Configuração do Ollama local
-const OLLAMA_API = process.env.OLLAMA_API || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llava';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API = 'https://api.openai.com/v1';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+const MAX_PROMPT_COST_EUR = 5;
 
-/**
- * Envia uma mensagem para o modelo Llava via Ollama
- * @param {string} message - Mensagem do utilizador
- * @param {Array} conversationHistory - Histórico da conversa (opcional)
- * @returns {Promise<string>} - Resposta do modelo
- */
+const getModelPricePerThousandTokens = (model) => {
+  if (model.includes('gpt-4')) {
+    return 0.12; // euro per 1000 tokens (estimate for gpt-4 family)
+  }
+  return 0.002; // euro per 1000 tokens for gpt-3.5-turbo (approximate)
+};
+
+const estimateTokens = (text) => {
+  if (!text) return 0;
+  // Estimativa conservadora: 1 token ~= 4 caracteres
+  return Math.ceil(text.length / 4);
+};
+
 const sendMessageToLLM = async (message, conversationHistory = []) => {
   try {
-    // Construir o contexto com histórico
-    let prompt = message;
-    
-    if (conversationHistory.length > 0) {
-      // Adicionar histórico recente para manter contexto
-      const recentHistory = conversationHistory.slice(-4); // Últimas 4 mensagens
-      prompt = recentHistory
-        .map(msg => `${msg.sender === 'user' ? 'Utilizador' : 'Assistente'}: ${msg.text}`)
-        .join('\n');
-      prompt += `\nUtilizador: ${message}`;
+    if (!OPENAI_API_KEY) {
+      throw new Error('Chave OpenAI não configurada');
     }
 
-    console.log('[AI Service] Enviando para Ollama:', {
-      model: OLLAMA_MODEL,
+    const messages = [];
+    const recentHistory = conversationHistory.slice(-6);
+    if (recentHistory.length > 0) {
+      recentHistory.forEach(msg => {
+        messages.push({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.text
+        });
+      });
+    }
+    messages.push({ role: 'user', content: message });
+
+    const promptText = messages.map(msg => msg.content).join('\n');
+    const estimatedPromptTokens = estimateTokens(promptText);
+    const pricePerThousandTokens = getModelPricePerThousandTokens(OPENAI_MODEL);
+    const totalAllowedTokens = Math.floor((MAX_PROMPT_COST_EUR / pricePerThousandTokens) * 1000);
+    const maxCompletionTokens = Math.max(Math.min(1000, totalAllowedTokens - estimatedPromptTokens), 0);
+
+    if (maxCompletionTokens <= 0) {
+      throw new Error('Prompt muito grande para o limite de 5 euros. Reduza o tamanho do texto.')
+    }
+
+    console.log('[AI Service] Enviando para OpenAI:', {
+      model: OPENAI_MODEL,
       messageLength: message.length,
       historyLength: conversationHistory.length
     });
 
-    const response = await axios.post(`${OLLAMA_API}/api/generate`, {
-      model: OLLAMA_MODEL,
-      prompt: prompt,
-      stream: false,
+    const response = await axios.post(`${OPENAI_API}/chat/completions`, {
+      model: OPENAI_MODEL,
+      messages,
       temperature: 0.7,
       top_p: 0.9,
-      top_k: 40,
-      context_window: 2048
+      max_tokens: maxCompletionTokens,
+      n: 1,
+      stream: false,
     }, {
-      timeout: 120000 // 2 minutos timeout
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 120000
     });
 
-    if (!response.data || !response.data.response) {
-      throw new Error('Resposta vazia do Ollama');
+    const completion = response.data?.choices?.[0]?.message?.content;
+    if (!completion) {
+      throw new Error('Resposta vazia da OpenAI');
     }
 
     console.log('[AI Service] Resposta recebida com sucesso');
-    return response.data.response.trim();
+    return completion.trim();
 
   } catch (err) {
-    console.error('[AI Service] Erro ao comunicar com Ollama:', {
+    console.error('[AI Service] Erro ao comunicar com OpenAI:', {
       message: err.message,
       code: err.code,
-      endpoint: `${OLLAMA_API}/api/generate`
+      endpoint: `${OPENAI_API}/chat/completions`
     });
 
-    // Verificar se é problema de conexão
-    if (err.code === 'ECONNREFUSED') {
-      throw new Error(
-        'Não consegui conectar ao Ollama. Certifique-se que:\n' +
-        '1. Ollama está em execução (ollama serve)\n' +
-        '2. O modelo "llava" está disponível (ollama pull llava)\n' +
-        `3. A API está acessível em ${OLLAMA_API}`
-      );
+    if (err.response?.status === 401) {
+      throw new Error('Chave OpenAI inválida ou não autorizada');
     }
 
     throw new Error(`Erro ao processar pergunta: ${err.message}`);
   }
 };
 
-/**
- * Verifica se o Ollama está disponível
- * @returns {Promise<boolean>}
- */
 const isOllamaAvailable = async () => {
+  if (!OPENAI_API_KEY) return false;
+
   try {
-    const response = await axios.get(`${OLLAMA_API}/api/tags`, {
+    const response = await axios.get(`${OPENAI_API}/models`, {
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`
+      },
       timeout: 5000
     });
     return response.status === 200;
   } catch (err) {
-    console.warn('[AI Service] Ollama não está disponível:', err.message);
+    console.warn('[AI Service] OpenAI não está disponível:', err.message);
     return false;
   }
 };
 
-/**
- * Obtém lista de modelos disponíveis no Ollama
- * @returns {Promise<Array>}
- */
 const getAvailableModels = async () => {
+  if (!OPENAI_API_KEY) return [];
+
   try {
-    const response = await axios.get(`${OLLAMA_API}/api/tags`, {
+    const response = await axios.get(`${OPENAI_API}/models`, {
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`
+      },
       timeout: 5000
     });
-    return response.data.models || [];
+    return response.data?.data || [];
   } catch (err) {
     console.error('[AI Service] Erro ao obter modelos:', err.message);
     return [];
@@ -106,6 +129,6 @@ module.exports = {
   sendMessageToLLM,
   isOllamaAvailable,
   getAvailableModels,
-  OLLAMA_API,
-  OLLAMA_MODEL
+  OPENAI_API,
+  OPENAI_MODEL
 };

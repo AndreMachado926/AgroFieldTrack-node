@@ -105,6 +105,7 @@ const MarketRoutes = require('./routes/MarketRoute');
 const SettingsRoutes = require('./routes/SettingsRoute');
 const ChatsRoutes = require('./routes/ChatsRoute');
 const AiRoute = require('./routes/AiRoute');
+const PromptRoutes = require('./routes/PromptRoute');
 const ArduinosRoute = require('./routes/ArduinosRoute')(io);
 const AnimalRoute = require('./routes/AnimaisRoute');
 
@@ -131,6 +132,7 @@ safeUse('veterinariosRouter', veterinariosRouter);
 safeUse('SettingsRoutes', SettingsRoutes);
 safeUse('ChatsRoutes', ChatsRoutes);
 safeUse('AiRoute', AiRoute);
+safeUse('PromptRoutes', PromptRoutes);
 safeUse('ArduinosRoute', ArduinosRoute);
 safeUse('AnimalRoute', AnimalRoute);
 
