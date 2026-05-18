@@ -9,5 +9,6 @@ router.post('/veterinarios', veterinariosController.createVeterinario);
 router.get('/veterinarios/:id/type', veterinariosController.getusertype);
 router.get('/veterinarios/:id/chats', veterinariosController.getveterinarioschats);
 router.get('/veterinarios/:id/shared-animals', veterinariosController.getSharedAnimalsForVeterinario);
+router.get('/veterinarios/:id', veterinariosController.getVeterinarioById);
 
 module.exports = router;

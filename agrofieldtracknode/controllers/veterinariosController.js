@@ -158,4 +158,24 @@ const getSharedAnimalsForVeterinario = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Erro ao obter animais compartilhados para veterinário' });
   }
 };
-module.exports = { getAllVeterinarios, createVeterinario, getusertype, getveterinarioschats, getSharedAnimalsForVeterinario };
+
+const getVeterinarioById = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: 'ID de usuário inválido' });
+    }
+
+    const user = await Users.findById(userId).select('nome_completo profilePic username email').lean();
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+    }
+
+    return res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    console.error('Erro ao obter usuário:', err);
+    return res.status(500).json({ success: false, message: 'Erro ao obter usuário' });
+  }
+};
+
+module.exports = { getAllVeterinarios, createVeterinario, getusertype, getveterinarioschats, getSharedAnimalsForVeterinario, getVeterinarioById };
