@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Animal = require('../models/AnimaisModel');
-const Pasto = require('../models/pastasModel');
+const Pasto = require('../models/pastosModel');
 
 /**
  * Verifica se um ponto está dentro de um polígono

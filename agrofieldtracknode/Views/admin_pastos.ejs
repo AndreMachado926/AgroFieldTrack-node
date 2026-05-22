@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Pastos</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #111;
+            display: flex;
+            justify-content: flex-start;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        .navbar a:hover {
+            color: #4A9782;
+        }
+
+        /* Conteúdo */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 80px auto 50px auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .add-btn {
+            background-color: #4A9782;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .add-btn:hover {
+            background-color: #36735b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #222;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        .action-btn {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .edit-btn {
+            background-color: #007bff;
+        }
+
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: #111;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 500px;
+            max-height: 90vh;
+            color: #fff;
+            box-shadow: 0 0 10px #4A9782;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            text-align: center;
+        }
+
+        .modal-content input,
+        .modal-content select,
+        .modal-content textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: none;
+            background-color: #222;
+            color: #fff;
+            box-sizing: border-box;
+        }
+
+        .modal-content textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: monospace;
+        }
+
+        .modal-content button {
+            margin-top: 10px;
+        }
+
+        .close-btn {
+            background-color: #dc3545;
+            float: right;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .truncate {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <a href="/admin/users">Usuários</a>
+        <a href="/admin/animais">Animais</a>
+        <a href="/admin/plantacoes">Plantações</a>
+        <a href="/admin/pastos">Pastos</a>
+        <a href="/admin/chats">Chats</a>
+    </div>
+
+    <!-- Conteúdo principal -->
+    <div class="container">
+        <h1>Admin Pastos</h1>
+        <button class="add-btn" onclick="openAddModal()">Adicionar Pasto</button>
+
+        <!-- Tabela de pastos -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Dono</th>
+                    <th>Pontos X</th>
+                    <th>Pontos Y</th>
+                    <th>Animais</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% pastos.forEach(pasto => { %>
+                    <tr>
+                        <td><%= pasto.nome %></td>
+                        <td><%= pasto.dono_id %></td>
+                        <td><span class="truncate"><%= JSON.stringify(pasto.pontosx) %></span></td>
+                        <td><span class="truncate"><%= JSON.stringify(pasto.pontosy) %></span></td>
+                        <td><%= pasto.animais_ids ? pasto.animais_ids.length : 0 %></td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick='openEditModal(<%= JSON.stringify(pasto) %>)'>Editar</button>
+                            <button class="action-btn" onclick="deletePasto('<%= pasto._id %>')">Deletar</button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Único (Adicionar/Editar) -->
+    <div id="pastoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">×</span>
+            <h2 id="modalTitle">Adicionar Pasto</h2>
+            <form id="pastoForm">
+                <input type="hidden" name="id" id="pastoId">
+                <input type="text" name="nome" placeholder="Nome do pasto" required>
+                <input type="text" name="dono_id" placeholder="ID do Dono" required>
+                <textarea name="pontosx" placeholder="Pontos X (um por linha, valores numéricos)" id="pontosxField" required></textarea>
+                <textarea name="pontosy" placeholder="Pontos Y (um por linha, valores numéricos)" id="pontosyField" required></textarea>
+                <textarea name="animais_ids" placeholder="IDs dos Animais (um por linha)" id="animaisField"></textarea>
+                <button type="submit" class="add-btn">Adicionar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById("pastoModal");
+        const form = document.getElementById("pastoForm");
+        const modalTitle = document.getElementById("modalTitle");
+        const pontosxField = document.getElementById("pontosxField");
+        const pontosyField = document.getElementById("pontosyField");
+        const animaisField = document.getElementById("animaisField");
+
+        function openAddModal() {
+            modal.style.display = "block";
+            form.reset();
+            document.getElementById("pastoId").value = "";
+            form.querySelector("button[type=submit]").textContent = "Adicionar";
+            modalTitle.textContent = "Adicionar Pasto";
+        }
+
+        function openEditModal(pasto) {
+            modal.style.display = "block";
+            document.getElementById("pastoId").value = pasto._id;
+            form.nome.value = pasto.nome || '';
+            form.dono_id.value = pasto.dono_id || '';
+            pontosxField.value = (pasto.pontosx || []).join('\n');
+            pontosyField.value = (pasto.pontosy || []).join('\n');
+            animaisField.value = (pasto.animais_ids || []).join('\n');
+            form.querySelector("button[type=submit]").textContent = "Salvar Alterações";
+            modalTitle.textContent = "Editar Pasto";
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+            form.reset();
+            document.getElementById("pastoId").value = "";
+            form.querySelector("button[type=submit]").textContent = "Adicionar";
+            modalTitle.textContent = "Adicionar Pasto";
+        }
+
+        window.onclick = function (event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const pontosx = pontosxField.value.split('\n').filter(p => p.trim()).map(Number);
+            const pontosy = pontosyField.value.split('\n').filter(p => p.trim()).map(Number);
+            
+            if (pontosx.length !== pontosy.length) {
+                alert("Os arrays de pontos X e Y devem ter o mesmo tamanho!");
+                return;
+            }
+            
+            if (pontosx.length < 3) {
+                alert("É necessário pelo menos 3 pontos para definir uma área!");
+                return;
+            }
+
+            const data = {
+                id: document.getElementById("pastoId").value,
+                nome: form.nome.value,
+                dono_id: form.dono_id.value,
+                pontosx: pontosx,
+                pontosy: pontosy,
+                animais_ids: animaisField.value.split('\n').filter(a => a.trim())
+            };
+
+            let url = "/admin/pastos/add";
+            if (data.id) {
+                url = "/admin/pastos/edit";
+            }
+
+            fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(data.id ? "Pasto editado com sucesso!" : "Pasto adicionado com sucesso!");
+                        window.location.reload();
+                    } else {
+                        alert("Erro: " + result.message);
+                    }
+                })
+                .catch(err => alert("Erro: " + err.message));
+        });
+
+        function deletePasto(pastoId) {
+            if (confirm("Tem certeza que deseja deletar este pasto?")) {
+                fetch(`/admin/pastos/delete/${pastoId}`, { method: "DELETE" })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Pasto deletado com sucesso!");
+                            window.location.reload();
+                        } else {
+                            alert("Erro ao deletar pasto: " + data.message);
+                        }
+                    })
+                    .catch(err => alert("Erro ao deletar pasto: " + err.message));
+            }
+        }
+    </script>
+
+</body>
+
+</html>
