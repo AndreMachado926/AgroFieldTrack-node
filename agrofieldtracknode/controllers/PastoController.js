@@ -1,4 +1,4 @@
-const Pasto = require('../models/pastasModel');
+const Pasto = require('../models/pastosModel');
 const mongoose = require('mongoose');
 
 /**
