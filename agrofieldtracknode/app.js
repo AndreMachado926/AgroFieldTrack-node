@@ -108,6 +108,7 @@ const AiRoute = require('./routes/AiRoute');
 const PromptRoutes = require('./routes/PromptRoute');
 const ArduinosRoute = require('./routes/ArduinosRoute')(io);
 const AnimalRoute = require('./routes/AnimaisRoute');
+const UsersRoute = require('./routes/UsersRoute');
 
 
 const safeUse = (name, r) => {
@@ -135,6 +136,7 @@ safeUse('AiRoute', AiRoute);
 safeUse('PromptRoutes', PromptRoutes);
 safeUse('ArduinosRoute', ArduinosRoute);
 safeUse('AnimalRoute', AnimalRoute);
+safeUse('UsersRoute', UsersRoute);
 
 io.on("connection", (socket) => {
   console.log("Socket conectado:", socket.id);
