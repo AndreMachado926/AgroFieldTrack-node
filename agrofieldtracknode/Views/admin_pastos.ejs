@@ -168,6 +168,23 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+        .points-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 200px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .points-list span {
+            display: block;
+            padding: 2px 4px;
+            background-color: #222;
+            border-radius: 3px;
+            font-size: 12px;
+        }
     </style>
 </head>
 
@@ -179,7 +196,6 @@
         <a href="/admin/animais">Animais</a>
         <a href="/admin/plantacoes">Plantações</a>
         <a href="/admin/pastos">Pastos</a>
-        <a href="/admin/chats">Chats</a>
     </div>
 
     <!-- Conteúdo principal -->
@@ -203,9 +219,31 @@
                 <% pastos.forEach(pasto => { %>
                     <tr>
                         <td><%= pasto.nome %></td>
-                        <td><%= pasto.dono_id %></td>
-                        <td><span class="truncate"><%= JSON.stringify(pasto.pontosx) %></span></td>
-                        <td><span class="truncate"><%= JSON.stringify(pasto.pontosy) %></span></td>
+                        <td>
+                            <% if (pasto.dono_id) { %>
+                                <% if (typeof pasto.dono_id === 'object') { %>
+                                    <%= pasto.dono_id.username %> (<%= pasto.dono_id._id %>)
+                                <% } else { %>
+                                    <%= pasto.dono_id %>
+                                <% } %>
+                            <% } else { %>
+                                -
+                            <% } %>
+                        </td>
+                        <td>
+                            <div class="points-list">
+                                <% (pasto.pontosx || []).forEach(ponto => { %>
+                                    <span><%= ponto %></span>
+                                <% }) %>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="points-list">
+                                <% (pasto.pontosy || []).forEach(ponto => { %>
+                                    <span><%= ponto %></span>
+                                <% }) %>
+                            </div>
+                        </td>
                         <td><%= pasto.animais_ids ? pasto.animais_ids.length : 0 %></td>
                         <td>
                             <button class="action-btn edit-btn" onclick='openEditModal(<%= JSON.stringify(pasto) %>)'>Editar</button>
