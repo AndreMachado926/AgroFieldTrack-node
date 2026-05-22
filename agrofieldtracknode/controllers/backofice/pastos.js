@@ -2,7 +2,7 @@ const Pasto = require("../../models/pastosModel");
 
 const getAllPastos = async (req, res) => {
     try {
-        const pastos = await Pasto.find().exec();
+        const pastos = await Pasto.find().populate('dono_id').exec();
         res.render("admin_pastos", { pastos });
     } catch (err) {
         console.error(err);
